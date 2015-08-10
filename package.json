@@ -1,0 +1,23 @@
+{
+  "name": "radredis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint src",
+    "test": "mocha --compilers js:babel/register test/*.js",
+    "compile": "rm -rf dist/ && mkdir dist/ && babel src/ --out-file dist/radredis.js && cp package.json dist/"
+  },
+  "author": "Tyler Love",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^2.9.34",
+    "hiredis": "^0.4.0",
+    "ioredis": "^1.7.3"
+  },
+  "devDependencies": {
+    "babel": "^5.8.21",
+    "babel-eslint": "^4.0.5",
+    "mocha": "^2.2.5"
+  }
+}
