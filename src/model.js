@@ -1,4 +1,5 @@
-import Redis from './redis';
+import Config from './config';
+import Attribute from './model/attribute';
 
 class Model {
 
@@ -7,33 +8,68 @@ class Model {
   }
 
   static set schema(schema) {
-    for(let attribute of schema) {
-      Object.defineProperty(this.prototype, attribute.name, {
-        configurable: false,
-        get() { 
-          return this._attributes[attribute.name] || attribute.default || null;
-        },
-        set(value) { 
-          return this._attributes[attribute.name] = value; 
-        }
-      });
+    for(let param of schema) {
+      Attribute.define(this.prototype, param);
     }   
-    return this._schema = schema;
+    this._schema = schema;
   }
+
 
   constructor(attributes={}) {
+    let id = attributes.id || null;
+    if(id) { delete attributes.id; }
     this._attributes = attributes;
-    for(let key of Object.keys(attributes)) {
-      this[key] = attributes[key];
-    }
   }
 
+
+  get id() {
+    return this._id;
+  }
+
+  set id(value) {
+    this._id = value;
+  }
+
+  get attributes() {
+    return this._attributes;
+  }
+
+
+  /* State & Flags */
+  get isDirty() {
+    return this._isDirty || false;
+  }
+
+  set isDirty(val) {
+    this._isDirty = val;
+  }
+
+  get isNew() {
+    return this.id || true;
+  }
+
+
+  /* Lifecycle */
   save() {
-    console.log(this.constructor.name);
+    return Promise.reject('implement');
   }
 
-  redis() {
-    return Redis.connection;
+  updateAttributes(attributes) {
+    return Promise.reject('implement');
+  }
+
+  destroy() {
+    return Promise.reject('implement');
+  }
+
+
+  /* Helpers, getters, setters */
+  get redis() {
+    return this._redis || Config.redis;
+  }
+
+  set redis(connection) {
+    this._redis = connection;
   }
 
 }

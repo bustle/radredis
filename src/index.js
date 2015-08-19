@@ -1,1 +1,2 @@
-export { Model } from './model';
+export config from './config';
+export Model from './model';
