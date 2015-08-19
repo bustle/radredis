@@ -5,7 +5,7 @@ describe('Attribute', () => {
   describe("#define()", () => {
     let FakeModel;
     let attribute = { key: 'name' };
-    let attributeWithDefault = { key: 'color', defaultValue: '#FFFFFF' };
+    let attributeWithDefault = { key: 'breed', defaultValue: 'cat' };
 
     beforeEach(() => {
       FakeModel = {

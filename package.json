@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint src",
     "test": "mocha --compilers js:babel/register --recursive",
-    "compile": "rm -rf dist/ && mkdir dist/ && babel src/ --out-file dist/radredis.js && cp package.json dist/"
+    "compile": "rm -rf dist/ && mkdir dist/ && babel src/ --loose all --out-file dist/radredis.js && cp package.json dist/"
   },
   "author": "Tyler Love",
   "license": "MIT",
