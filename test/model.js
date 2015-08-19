@@ -1,9 +1,10 @@
 import assert from 'assert';
 import Model from '../src/model';
 
-class Person extends Model {};
-Person.schema = [ 
+class User extends Model {};
+User.schema = [ 
   { key: 'name' },
+  { key: 'email', required: true },
   { key: 'birthday' },
   { key: 'fingers', defaultValue: 10 },
   { key: 'url' }
