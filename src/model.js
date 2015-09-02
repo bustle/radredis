@@ -8,8 +8,9 @@ class Model {
   }
 
   static set schema(schema) {
-    for(let param of schema) {
-      Attribute.define(this.prototype, param);
+    for(let definition of schema) {
+      let attribute = Attribute.define(this.prototype, definition);
+      Object.defineProperty(this.prototype, definition.key, attribute);
     }   
     this._schema = schema;
   }

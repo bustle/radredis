@@ -1,11 +1,11 @@
 export default {
-  define(object, params) {
-    Object.defineProperty(object, params.key, {
+  define(definition) {
+    return {
       configurable: false,
 
       get() { 
-        let defaultValue = params.defaultValue || null;
-        let value = this.attributes[params.key];
+        let defaultValue = definition.defaultValue || null;
+        let value = this.attributes[definition.key];
         if(value !== undefined) {
           return value;
         }
@@ -13,8 +13,8 @@ export default {
       },
 
       set(value) { 
-        this.attributes[params.key] = value; 
+        this.attributes[definition.key] = value; 
       }
-    });
+    };
   }
 }

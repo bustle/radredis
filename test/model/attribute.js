@@ -3,32 +3,35 @@ import Attribute from '../../src/model/attribute';
 
 describe('Attribute', () => {
   describe("#define()", () => {
-    let FakeModel;
-    let attribute = { key: 'name' };
-    let attributeWithDefault = { key: 'breed', defaultValue: 'cat' };
+    let Model;
+    let attributes;
+    let definition = { key: 'name' };
+    let definitionWithDefault = { key: 'breed', defaultValue: 'cat' };
+    let definitionWithRequired = { key: 'color' };
 
     beforeEach(() => {
-      FakeModel = {
+      // Attribute#define expects an attributes property of object passed
+      Model = {
         attributes: {}
       };
-      Attribute.define(FakeModel, attribute);
-      Attribute.define(FakeModel, attributeWithDefault);
+      Attribute.define(Model, definition);
+      Attribute.define(Model, definitionWithDefault);
+      Attribute.define(Model, definitionWithRequired);
     });
 
     it("defines getter and setter", () => {
-      let descriptor = Object.getOwnPropertyDescriptor(FakeModel, attribute.key);
+      let descriptor = Object.getOwnPropertyDescriptor(Model, definition.key);
       assert.equal(typeof descriptor, 'object');
-      assert.equal(typeof descriptor.get, 'function');
-      assert.equal(typeof descriptor.set, 'function');
     });
 
     it("returns null when not set", () => {
-      assert.equal(FakeModel[attribute.key], null);
+      assert.equal(Model[definition.key], null);
     });
 
-    it("returns the defaultValue value when supplied", () => {
-      assert.equal(FakeModel[attributeWithDefault.key], attributeWithDefault.defaultValue);
+    it("returns the defaultValue when set and no attribute value supplied", () => {
+      assert.equal(Model[definitionWithDefault.key], definitionWithDefault.defaultValue);
     });
+
   });
 });
 
