@@ -18,7 +18,8 @@ User.schema = [
   { key: 'userName', type: 'wacky'   },
   { key: 'birthday', type: 'date'    },
   { key: 'age',      type: 'number'  },
-  { key: 'isAdmin',  type: 'boolean' }
+  { key: 'isAdmin',  type: 'boolean' },
+  { key: 'data',     type: 'json'    }
 ];
 
 describe('Model', () => {
@@ -30,11 +31,13 @@ describe('Model', () => {
       userName: 'tristan',
       birthday: new Date(),
       age: 24,
-      isAdmin: true
+      isAdmin: true,
+      data: {arr: [1,2,3]}
     };
-    rawUserInfo = JSON.parse(JSON.stringify(userInfo))
+    rawUserInfo = Object.assign({}, userInfo);
     rawUserInfo.birthday = new Date(rawUserInfo.birthday).getTime();
     rawUserInfo.userName = '~~~tristan~~~';
+    rawUserInfo.data = JSON.stringify(rawUserInfo.data);
     user = new User(userInfo);
   });
 

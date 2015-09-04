@@ -1,4 +1,5 @@
 import DateTransform    from './transforms/date';
+import JSONTransform    from './transforms/json';
 import StringTransform  from './transforms/string';
 import NumberTransform  from './transforms/number';
 import BooleanTransform from './transforms/boolean';
@@ -6,7 +7,7 @@ import BooleanTransform from './transforms/boolean';
 class Transformer {
   // Class Methods
   static get instance(){
-    if (!this._instance) { this._instance = new this(); }
+    new this();
     return this._instance;
   }
 
@@ -25,7 +26,12 @@ class Transformer {
   }
   // Instance Methods
   constructor(){
+    //ensure that there can only be one instance
+    if (this.constructor._instance) {return;}
+    this.constructor._instance = this;
+
     this.register('date',    DateTransform);
+    this.register('json',    JSONTransform);
     this.register('string',  StringTransform);
     this.register('number',  NumberTransform);
     this.register('boolean', BooleanTransform);
