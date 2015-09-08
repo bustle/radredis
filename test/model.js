@@ -9,6 +9,18 @@ Person.schema = [
   { key: 'fingers', defaultValue: 10 },
   { key: 'url' }
 ];
+Person.afterCreate = (person) => {
+  console.log("afterCreate");
+};
+Person.beforeCreate = (person) => {
+  console.log("beforeCreate");
+};
+Person.afterUpdate = (person) => {
+  console.log("afterUpdate");
+};
+Person.beforeUpdate = (person) => {
+  console.log("beforeUpdate");
+};
 
 describe('Model', () => {
   let person, attributes;
@@ -95,6 +107,36 @@ describe('Model', () => {
       .then((p) => { return Person.find(p.id); })
       .then((p) => {
         assert.equal(person.name, p.name);
+      }).catch((err) => {
+        assert.ifError(err);
+      });        
+    });
+
+  });
+
+  describe("::findAll()", () => {
+
+    it("finds and loads records", () => {
+      return Person.findAll([1,2,3])
+      .then((persons) => {
+      }).catch((err) => {
+        assert.ifError(err);
+      });        
+    });
+
+  });
+
+  describe("::saveAll()", () => {
+
+    it("saves array of records", () => {
+      return Person.findAll([457,458,459])
+      .then((persons) => {
+        for(let p of persons) {
+          p.name = 'Albert Einstain';
+        }
+        return Person.saveAll(persons); 
+      })
+      .then((persons) => {
       }).catch((err) => {
         assert.ifError(err);
       });        
