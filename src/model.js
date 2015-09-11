@@ -1,75 +1,169 @@
-import Config from './config';
+import Promise   from 'bluebird';
+import Config    from './config';
 import Attribute from './model/attribute';
 
 class Model {
+
+  //class methods
+
+  static get redis() {
+    return this._redis || Config.redis;
+  }
+
+  //NOTE THIS IS TEMPORARY UNTIL WE DECIDE HOW TO PROCEED WITH AN ADAPTER
+  static set redis(redis) {
+    this._redis = redis;
+  }
+
+  static get redisKey() {
+    return Config.redisKeyPrefix + this._redisKey;
+  }
 
   static get schema() {
     return this._schema;
   }
 
+  static set redisKey(key) {
+    this._redisKey = key;
+  }
+
   static set schema(schema) {
     for(let param of schema) {
       Attribute.define(this.prototype, param);
-    }   
+    }
     this._schema = schema;
   }
 
+  static set afterCreate(func) {
+    this._afterCreate = func;
+  }
+
+  static set beforeCreate(func) {
+    this._beforeCreate = func;
+  }
+
+  static set afterUpdate(func) {
+    this._afterUpdate = func;
+  }
+
+  static set beforeUpdate(func) {
+    this._beforeUpdate = func;
+  }
+
+  static find(id) {
+    if(typeof(id) == 'object'){
+      this.findAll(id)
+    }else{
+      return new Promise((resolve, reject) => {
+        let model = new this;
+        model.attributes.id = id;
+        model.load().then((model) => {
+          resolve(model);
+        }).catch(reject);
+      });
+    }
+  }
+
+  static findAll(ids) {
+    return new Promise((resolve, reject) => {
+      let pipeline = this.redis.pipeline();
+      for(let id of ids) {
+        pipeline.hgetall(this.redisKey + ':' + id + ':_attributes');
+      }
+      pipeline.exec((err, results) => {
+        let models = [];
+        for(let data of results){
+          if(data[0] == null && Object.keys(data[1]).length > 0){
+            let model = new this(data[1]);
+            models.push(model);
+          }
+        }
+        resolve(models);
+      }).catch(reject);
+    });
+  }
+
+
+  static saveAll(models) {
+    return Promise.map(models, (m)=>{ return m.save();});
+  }
+
+
+  //instance methods
 
   constructor(attributes={}) {
-    let id = attributes.id || null;
-    if(id) { delete attributes.id; }
     this._attributes = attributes;
   }
 
-
-  get id() {
-    return this._id;
-  }
-
-  set id(value) {
-    this._id = value;
+  _generateId() {
+    return this.redis.incr(this.constructor.redisKey + ':id');
   }
 
   get attributes() {
     return this._attributes;
   }
 
-
-  /* State & Flags */
-  get isDirty() {
-    return this._isDirty || false;
+  get id() {
+    return this.attributes.id;
   }
 
-  set isDirty(val) {
-    this._isDirty = val;
+  get redis() {
+    return this.constructor.redis;
   }
 
-  get isNew() {
-    return this.id || true;
+  get redisKey() {
+    let key = this.constructor.redisKey + ':' + this.id;
+    return key;
   }
 
+  create() {
+    return new Promise((resolve, reject) => {
+      let beforeCreate = this.constructor._beforeCreate || ()=>{};
+      let afterCreate = this.constructor._afterCreate || ()=>{};
+      this._generateId().then((id) => {
+        this._attributes.id = id;
+        Promise.resolve(beforeCreate(this)).then(() => {
+          this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
+            Promise.resolve(afterCreate(this)).then(resolve(this));
+          });
+        });
+      }).catch(reject);
+    });
+  }
 
-  /* Lifecycle */
+  load() {
+    return new Promise((resolve, reject) => {
+      this.redis.hgetall(this.redisKey + ':_attributes').then((data) => {
+        this._attributes = data;
+        resolve(this);
+      }).catch(reject);
+    })
+  }
+
   save() {
-    return Promise.reject('implement');
+    if(this.id) {
+      return this.update();
+    } else {
+      return this.create();
+    }
   }
 
-  updateAttributes(attributes) {
-    return Promise.reject('implement');
+  update() {
+    return new Promise((resolve, reject) => {
+      let beforeUpdate = this.constructor._beforeUpdate || ()=>{};
+      let afterUpdate = this.constructor._afterUpdate || ()=>{};
+      Promise.resolve(beforeUpdate(this)).then(() => {
+        this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
+          Promise.resolve(afterUpdate(this)).then(resolve(this));
+        });
+      }).catch(reject);
+    });
   }
 
   destroy() {
-    return Promise.reject('implement');
-  }
-
-
-  /* Helpers, getters, setters */
-  get redis() {
-    return this._redis || Config.redis;
-  }
-
-  set redis(connection) {
-    this._redis = connection;
+    return new Promise((resolve, reject) => {
+      this.redis.del(this.redisKey + ':_attributes').then(resolve(this)).catch(reject);
+    })
   }
 
 }
