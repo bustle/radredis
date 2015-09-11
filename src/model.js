@@ -1,4 +1,5 @@
-import Config from './config';
+import Promise   from 'bluebird';
+import Config    from './config';
 import Attribute from './model/attribute';
 
 class Model {
@@ -6,7 +7,12 @@ class Model {
   //class methods
 
   static get redis() {
-    return Config.redis;
+    return this._redis || Config.redis;
+  }
+
+  //NOTE THIS IS TEMPORARY UNTIL WE DECIDE HOW TO PROCEED WITH AN ADAPTER
+  static set redis(redis) {
+    this._redis = redis;
   }
 
   static get redisKey() {
@@ -24,7 +30,7 @@ class Model {
   static set schema(schema) {
     for(let param of schema) {
       Attribute.define(this.prototype, param);
-    }   
+    }
     this._schema = schema;
   }
 
@@ -79,22 +85,7 @@ class Model {
 
 
   static saveAll(models) {
-    return new Promise((resolve, reject) => {
-      let pipeline = this.redis.pipeline();
-      for(let m of models) {
-        pipeline.hmset(this.redisKey + ':' + m.id + ':_attributes', m.attributes);
-      }
-      pipeline.exec((err, results) => {
-        let models = [];
-        for(let data of results){
-          if(data[0] == null && Object.keys(data[1]).length > 0){
-            let model = new this(data[1]);
-            models.push(model);
-          }
-        }
-        resolve(models);
-      }).catch(reject);
-    });
+    return Promise.map(models, (m)=>{ return m.save();});
   }
 
 
