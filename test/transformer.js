@@ -22,7 +22,7 @@ User.schema = [
   { key: 'data',     type: 'json'    }
 ];
 
-describe('Model', () => {
+describe('Transformer', () => {
   let user, userInfo, rawUserInfo;
   beforeEach(() => {
     Transformer.register('wacky', WackyTransform);
