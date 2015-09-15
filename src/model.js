@@ -1,11 +1,12 @@
-import Promise   from 'bluebird';
-import Config    from './config';
-import Attribute from './model/attribute';
+import Promise    from 'bluebird';
+import Config     from './config';
+import CoreObject from './core-object';
+import Attribute  from './model/attribute';
+import State      from './model/state';
 
-class Model {
+class Model extends CoreObject {
 
   //class methods
-
   static get redis() {
     return this._redis || Config.redis;
   }
@@ -83,15 +84,14 @@ class Model {
     });
   }
 
-
   static saveAll(models) {
     return Promise.map(models, (m)=>{ return m.save();});
   }
 
-
   //instance methods
 
   constructor(attributes={}) {
+    super();
     this._attributes = attributes;
   }
 
@@ -167,5 +167,7 @@ class Model {
   }
 
 }
+
+Model.includeMixin(State);
 
 export default Model;

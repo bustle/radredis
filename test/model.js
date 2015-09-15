@@ -63,6 +63,13 @@ describe('Model', () => {
 
   });
 
+  describe('state', () => {
+    it("updating an attribute dirties the model's private state", () => {
+      person.name = 'tristan';
+      assert.equal(person._isDirty, true);
+    });
+  });
+
   describe('#create()', () => {
 
     it('persists new model', () => {
