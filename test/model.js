@@ -13,16 +13,12 @@ Person.schema = [
   { key: 'url' }
 ];
 Person.afterCreate = (person) => {
-  console.log('afterCreate');
 };
 Person.beforeCreate = (person) => {
-  console.log('beforeCreate');
 };
 Person.afterUpdate = (person) => {
-  console.log('afterUpdate');
 };
 Person.beforeUpdate = (person) => {
-  console.log('beforeUpdate');
 };
 
 // TESTS
@@ -159,6 +155,29 @@ describe('Model', () => {
       });
     });
 
+  });
+
+  describe('::all()', () => {
+
+    beforeEach((done)=>{
+      person.save().then(()=>{
+        new Person().save().then(()=>{
+          new Person().save().then(()=>{done();});
+        });
+      });
+    });
+
+    it('returns a valid iterator', () => {
+      let iterator = Person.all();
+      return iterator.page({
+          offset: 0,
+          size: 25
+        }).then((persons) => {
+          assert.equal(Object.keys(persons).length, 3);
+        }).catch((err) => {
+          assert.ifError(err);
+      });
+    });
   });
 
 });

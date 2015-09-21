@@ -1,6 +1,7 @@
 import Promise   from 'bluebird';
 import Config    from './config';
 import Attribute from './model/attribute';
+import Iterator from './model/iterator';
 
 class Model {
 
@@ -48,6 +49,11 @@ class Model {
 
   static set beforeUpdate(func) {
     this._beforeUpdate = func;
+  }
+
+  static all() {
+    let iterator = new Iterator(this);
+    return iterator;
   }
 
   static find(id) {
@@ -124,7 +130,9 @@ class Model {
         this._attributes.id = id;
         Promise.resolve(beforeCreate(this)).then(() => {
           this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
-            Promise.resolve(afterCreate(this)).then(resolve(this));
+            this.redis.zadd(this.constructor.redisKey + ':_ids', id, id).then(() => {
+              Promise.resolve(afterCreate(this)).then(resolve(this));
+            });
           });
         });
       }).catch(reject);
@@ -162,7 +170,11 @@ class Model {
 
   destroy() {
     return new Promise((resolve, reject) => {
-      this.redis.del(this.redisKey + ':_attributes').then(resolve(this)).catch(reject);
+      this.redis.del(this.redisKey + ':_attributes').then(() => {
+        this.redis.zrem(this.constructor.redisKey + ':_ids', this.id).then(() => {
+          resolve(this);
+        });
+      }).catch(reject);
     })
   }
 
