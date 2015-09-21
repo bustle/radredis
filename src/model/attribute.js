@@ -13,6 +13,7 @@ export default {
       },
 
       set(value) {
+        if ( this.attributes[params.key] === value ){ return; }
         this.isDirty = true;
         this.attributes[params.key] = value;
       }

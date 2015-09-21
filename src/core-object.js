@@ -1,4 +1,6 @@
-class CoreObject {
+import EventEmitter from 'events';
+
+class CoreObject extends EventEmitter {
   static includeMixin(mixin){
     let props = Object.keys(mixin);
     for (let prop of props) {
@@ -11,7 +13,7 @@ class CoreObject {
           });
         }
       } else {
-        Object.defineProperty(this.prototype, prop, { value: mixin[prop] });
+        Object.defineProperty(this.prototype, prop, { value: mixin[prop], writable: true });
       }
     }
   }
@@ -27,7 +29,7 @@ class CoreObject {
           });
         }
       } else {
-        Object.defineProperty(this, prop, { value: mixin[prop] });
+        Object.defineProperty(this, prop, { value: mixin[prop], writable: true });
       }
     }
   }

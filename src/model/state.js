@@ -1,113 +1,68 @@
-import EventEmmiter from 'events';
-var noop = function(){};
+import EventEmitter from 'events';
+
+function noop(){return this;};
+
+function isFunction(func) {
+  return func && {}.toString.call(func) === '[object Function]';
+}
+
+function tryInvoke(obj, func, data){
+  if ( isFunction(obj[func]) ) { return obj[func](...data); }
+}
 
 export default {
   accessors: {
     isNew: {
-      get: function() {
-        return this._isNew || true;
-      },
-      set: function(bool) {
-        this._isNew = bool;
-      }
-    },
-    isLoaded: {
-      get: function(){
-        return this._isLoaded || false;
-      },
-      set: function(bool) {
-        this._isLoaded = bool;
-      }
+      get() { return this.id === undefined; }
     },
     isDirty: {
-      get: function() {
-        return this._isDirty || false;
-      },
-      set: function(bool) {
-        this._isDirty = bool;
-      }
+      get() { return this._isDirty; },
+      set(bool) { this._isDirty = bool; }
     },
-    isSaving: {
-      get: function() {
-          return this._isSaving || false;
-      },
-      set: function(bool) {
-        this._isSaving = bool;
-      }
-    },
-    isError: {
-      get: function() {
-        return this._isError || false;
-      },
-      set: function(bool) {
-        this._isError = bool;
-      }
-    },
-    errors: {
-      get: function() {
-        return this._errors;
-      },
-      set: function(errors) {
-        this._errors = errors;
-      }
+    isLoaded: {
+      get() { return this._isLoaded; },
+      set(bool) { this._isLoaded = bool; }
     }
   },
 
-  didCreate: noop,
-  didUpdate: noop,
-  didLoad: noop,
-  didDelete: noop,
-  becameError: noop,
+  // instance variable defaults
+  _isDirty:  false,
+  _isLoaded: false,
 
-  onSaved() {
+  // instance method hook defaults
+  willCreate:  noop,
+  willUpdate:  noop,
+  willDestroy: noop,
+  didCreate:   noop,
+  didUpdate:   noop,
+  didDestroy:  noop,
+  didLoad:     noop,
+
+  willBeSaved() {
+    this._emitEvent(this.isNew ? 'willCreate' : 'willUpdate', this);
+  },
+
+  onSaved(wasNew) {
+    this.onLoaded();
+    this._emitEvent(wasNew ? 'didCreate' : 'didUpdate', this);
+  },
+
+  onLoaded(){
     this.isDirty = false;
-    this.isSaving = false;
     this.isLoaded = true;
-    this.isError = false;
-    this._triggerEvent(wasNew ? 'didCreate' : 'didUpdate', this);
-    this._triggerEvent('didLoad', this);
+    this._emitEvent('didLoad', this);
   },
 
-  onDeleted() {
-    this._triggerEvent('didDelete', this);
-    Ember.run.next(this, function() {
-      this.destroy();
-    });
+  willBeDestroyed() {
+    this._emitEvent('willDestroy', this);
   },
 
-  onLoaded() {
-    this.isDirty = false;
-    this.isSaving = false;
-    this.isLoaded = true;
-    this.isError = false;
-    this._triggerEvent('didLoad', this);
+  onDestroyed() {
+    this._emitEvent('didDestroy', this);
   },
 
-  clearErrors() {
-    this.setProperties({ isError: false, errors: null });
-    return this;
-  },
-
-  copyState(clone) {
-    var mixins = State.mixins;
-    var props = mixins[mixins.length-1].properties, p;
-
-    Ember.beginPropertyChanges(clone);
-    for(p in props) {
-      if(props.hasOwnProperty(p) && typeof props[p] !== 'function') {
-        clone.set(p, this.get(p));
-      }
-    }
-    Ember.endPropertyChanges(clone);
-    return clone;
-  },
-
-  _isReady: false,
-
-  _triggerEvent(event, data) {
-    Ember.run(this, function() {
-      Ember.tryInvoke(this, event, [data]);
-      this.trigger(event, data);
-    });
+  _emitEvent(event, data) {
+    tryInvoke(this, event, [data]);
+    this.emit(event, data);
   }
 };

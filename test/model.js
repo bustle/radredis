@@ -12,19 +12,6 @@ Person.schema = [
   { key: 'fingers', defaultValue: 10 },
   { key: 'url' }
 ];
-Person.afterCreate = (person) => {
-  console.log('afterCreate');
-};
-Person.beforeCreate = (person) => {
-  console.log('beforeCreate');
-};
-Person.afterUpdate = (person) => {
-  console.log('afterUpdate');
-};
-Person.beforeUpdate = (person) => {
-  console.log('beforeUpdate');
-};
-
 // TESTS
 describe('Model', () => {
   let person, attributes;

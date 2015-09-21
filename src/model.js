@@ -35,22 +35,6 @@ class Model extends CoreObject {
     this._schema = schema;
   }
 
-  static set afterCreate(func) {
-    this._afterCreate = func;
-  }
-
-  static set beforeCreate(func) {
-    this._beforeCreate = func;
-  }
-
-  static set afterUpdate(func) {
-    this._afterUpdate = func;
-  }
-
-  static set beforeUpdate(func) {
-    this._beforeUpdate = func;
-  }
-
   static find(id) {
     if(typeof(id) == 'object'){
       this.findAll(id)
@@ -89,7 +73,6 @@ class Model extends CoreObject {
   }
 
   //instance methods
-
   constructor(attributes={}) {
     super();
     this._attributes = attributes;
@@ -117,15 +100,13 @@ class Model extends CoreObject {
   }
 
   create() {
+    this.willBeSaved();
     return new Promise((resolve, reject) => {
-      let beforeCreate = this.constructor._beforeCreate || ()=>{};
-      let afterCreate = this.constructor._afterCreate || ()=>{};
       this._generateId().then((id) => {
         this._attributes.id = id;
-        Promise.resolve(beforeCreate(this)).then(() => {
-          this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
-            Promise.resolve(afterCreate(this)).then(resolve(this));
-          });
+        this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
+          this.onSaved(true);
+          resolve(this);
         });
       }).catch(reject);
     });
@@ -135,6 +116,7 @@ class Model extends CoreObject {
     return new Promise((resolve, reject) => {
       this.redis.hgetall(this.redisKey + ':_attributes').then((data) => {
         this._attributes = data;
+        this.onLoaded();
         resolve(this);
       }).catch(reject);
     })
@@ -149,21 +131,23 @@ class Model extends CoreObject {
   }
 
   update() {
+    this.willBeSaved();
     return new Promise((resolve, reject) => {
-      let beforeUpdate = this.constructor._beforeUpdate || ()=>{};
-      let afterUpdate = this.constructor._afterUpdate || ()=>{};
-      Promise.resolve(beforeUpdate(this)).then(() => {
-        this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
-          Promise.resolve(afterUpdate(this)).then(resolve(this));
-        });
+      this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
+        this.onSaved(false);
+        resolve(this);
       }).catch(reject);
     });
   }
 
   destroy() {
+    this.willDestroy();
     return new Promise((resolve, reject) => {
-      this.redis.del(this.redisKey + ':_attributes').then(resolve(this)).catch(reject);
-    })
+      this.redis.del(this.redisKey + ':_attributes').then(()=>{
+        this.onDestroyed();
+        resolve(this);
+      });
+    });
   }
 
 }
