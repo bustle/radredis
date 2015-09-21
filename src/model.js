@@ -100,15 +100,15 @@ class Model extends CoreObject {
   }
 
   create() {
-    this.willBeSaved();
     return new Promise((resolve, reject) => {
-      this._generateId().then((id) => {
-        this._attributes.id = id;
-        this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
-          this.onSaved(true);
-          resolve(this);
-        });
-      }).catch(reject);
+      Promise.resolve(this.willBeSaved()).then(()=>{
+        this._generateId().then((id) => {
+          this._attributes.id = id;
+          this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
+            Promise.resolve(this.onSaved(true)).then(resolve(this));
+          });
+        }).catch(reject);
+      });
     });
   }
 
@@ -116,8 +116,7 @@ class Model extends CoreObject {
     return new Promise((resolve, reject) => {
       this.redis.hgetall(this.redisKey + ':_attributes').then((data) => {
         this._attributes = data;
-        this.onLoaded();
-        resolve(this);
+        Promise.resolve(this.onLoaded()).then(resolve(this));
       }).catch(reject);
     })
   }
@@ -131,21 +130,21 @@ class Model extends CoreObject {
   }
 
   update() {
-    this.willBeSaved();
     return new Promise((resolve, reject) => {
-      this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
-        this.onSaved(false);
-        resolve(this);
-      }).catch(reject);
+      Promise.resolve(this.willBeSaved()).then(()=>{
+        this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
+          Promise.resolve(this.onSaved(false)).then(resolve(this));
+        }).catch(reject);
+      });
     });
   }
 
   destroy() {
-    this.willDestroy();
     return new Promise((resolve, reject) => {
-      this.redis.del(this.redisKey + ':_attributes').then(()=>{
-        this.onDestroyed();
-        resolve(this);
+      Promise.resolve(this.willDestroy()).then(()=>{
+        this.redis.del(this.redisKey + ':_attributes').then(()=>{
+          Promise.resolve(this.onDestroyed()).then(resolve(this));
+        });
       });
     });
   }
