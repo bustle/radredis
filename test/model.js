@@ -12,14 +12,6 @@ Person.schema = [
   { key: 'fingers', defaultValue: 10 },
   { key: 'url' }
 ];
-Person.afterCreate = (person) => {
-};
-Person.beforeCreate = (person) => {
-};
-Person.afterUpdate = (person) => {
-};
-Person.beforeUpdate = (person) => {
-};
 
 // TESTS
 describe('Model', () => {
@@ -57,6 +49,13 @@ describe('Model', () => {
       assert.equal(person.url, null);
     });
 
+  });
+
+  describe('state', () => {
+    it("updating an attribute dirties the model's private state", () => {
+      person.name = 'tristan';
+      assert.equal(person._isDirty, true);
+    });
   });
 
   describe('#create()', () => {

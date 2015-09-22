@@ -3,7 +3,7 @@ export default {
     Object.defineProperty(object, params.key, {
       configurable: false,
 
-      get() { 
+      get() {
         let defaultValue = params.defaultValue || null;
         let value = this.attributes[params.key];
         if(value !== undefined) {
@@ -12,8 +12,10 @@ export default {
         return defaultValue;
       },
 
-      set(value) { 
-        this.attributes[params.key] = value; 
+      set(value) {
+        if ( this.attributes[params.key] === value ){ return; }
+        this.isDirty = true;
+        this.attributes[params.key] = value;
       }
     });
   }

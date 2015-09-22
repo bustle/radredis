@@ -3,7 +3,6 @@ import BaseTransform from './base';
 class DateTransform extends BaseTransform {
   deserialize(serialized) {
     var type = typeof serialized;
-    console.log(serialized)
     if (type === 'string') {
       return new Date(Date.parse(serialized));
     } else if (type === 'number') {

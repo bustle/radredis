@@ -10,7 +10,9 @@ class Iterator {
     return new Promise((resolve, reject) => {
       let key = this._model.redisKey + ':_ids';
       this._model.redis.zrange(key, opts.offset, opts.size).then((ids) => {
-        resolve(ids);
+        this._model.findAll(ids).then((instances) => {
+          resolve(instances);
+        });
       }).catch(reject);
     });
   }

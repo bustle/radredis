@@ -1,12 +1,13 @@
-import Promise   from 'bluebird';
-import Config    from './config';
-import Attribute from './model/attribute';
-import Iterator from './model/iterator';
+import Promise    from 'bluebird';
+import Config     from './config';
+import CoreObject from './core-object';
+import Attribute  from './model/attribute';
+import Iterator   from './model/iterator';
+import State      from './model/state';
 
-class Model {
+class Model extends CoreObject {
 
   //class methods
-
   static get redis() {
     return this._redis || Config.redis;
   }
@@ -33,22 +34,6 @@ class Model {
       Attribute.define(this.prototype, param);
     }
     this._schema = schema;
-  }
-
-  static set afterCreate(func) {
-    this._afterCreate = func;
-  }
-
-  static set beforeCreate(func) {
-    this._beforeCreate = func;
-  }
-
-  static set afterUpdate(func) {
-    this._afterUpdate = func;
-  }
-
-  static set beforeUpdate(func) {
-    this._beforeUpdate = func;
   }
 
   static all() {
@@ -89,15 +74,13 @@ class Model {
     });
   }
 
-
   static saveAll(models) {
     return Promise.map(models, (m)=>{ return m.save();});
   }
 
-
   //instance methods
-
   constructor(attributes={}) {
+    super();
     this._attributes = attributes;
   }
 
@@ -124,18 +107,16 @@ class Model {
 
   create() {
     return new Promise((resolve, reject) => {
-      let beforeCreate = this.constructor._beforeCreate || ()=>{};
-      let afterCreate = this.constructor._afterCreate || ()=>{};
-      this._generateId().then((id) => {
-        this._attributes.id = id;
-        Promise.resolve(beforeCreate(this)).then(() => {
+      Promise.resolve(this.willBeSaved()).then(()=>{
+        this._generateId().then((id) => {
+          this._attributes.id = id;
           this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
             this.redis.zadd(this.constructor.redisKey + ':_ids', id, id).then(() => {
-              Promise.resolve(afterCreate(this)).then(resolve(this));
-            });
+              Promise.resolve(this.onSaved(true)).then(resolve(this));
+            });         
           });
-        });
-      }).catch(reject);
+        }).catch(reject);
+      });
     });
   }
 
@@ -143,7 +124,7 @@ class Model {
     return new Promise((resolve, reject) => {
       this.redis.hgetall(this.redisKey + ':_attributes').then((data) => {
         this._attributes = data;
-        resolve(this);
+        Promise.resolve(this.onLoaded()).then(resolve(this));
       }).catch(reject);
     })
   }
@@ -158,26 +139,28 @@ class Model {
 
   update() {
     return new Promise((resolve, reject) => {
-      let beforeUpdate = this.constructor._beforeUpdate || ()=>{};
-      let afterUpdate = this.constructor._afterUpdate || ()=>{};
-      Promise.resolve(beforeUpdate(this)).then(() => {
+      Promise.resolve(this.willBeSaved()).then(()=>{
         this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
-          Promise.resolve(afterUpdate(this)).then(resolve(this));
-        });
-      }).catch(reject);
+          Promise.resolve(this.onSaved(false)).then(resolve(this));
+        }).catch(reject);
+      });
     });
   }
 
   destroy() {
     return new Promise((resolve, reject) => {
-      this.redis.del(this.redisKey + ':_attributes').then(() => {
-        this.redis.zrem(this.constructor.redisKey + ':_ids', this.id).then(() => {
-          resolve(this);
+      Promise.resolve(this.willDestroy()).then(()=>{
+        this.redis.del(this.redisKey + ':_attributes').then(()=>{
+          this.redis.zrem(this.constructor.redisKey + ':_ids', this.id).then(() => {
+            Promise.resolve(this.onDestroyed()).then(resolve(this));
+          });
         });
-      }).catch(reject);
-    })
+      });
+    });
   }
 
 }
+
+Model.includeMixin(State);
 
 export default Model;
