@@ -1,5 +1,3 @@
-import EventEmitter from 'events';
-
 function noop(){return this;};
 
 function isFunction(func) {
