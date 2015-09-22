@@ -9,11 +9,12 @@ class CoreObject extends EventEmitter {
         for (let accessor of accessors) {
           Object.defineProperty(this.prototype, accessor, {
             get: mixin[prop][accessor]['get'],
-            set: mixin[prop][accessor]['set']
+            set: mixin[prop][accessor]['set'],
+            enumerable: true,
           });
         }
       } else {
-        Object.defineProperty(this.prototype, prop, { value: mixin[prop], writable: true });
+        Object.defineProperty(this.prototype, prop, { value: mixin[prop], writable: true, enumerable: true });
       }
     }
   }
@@ -25,11 +26,12 @@ class CoreObject extends EventEmitter {
         for (let accessor of accessors) {
           Object.defineProperty(this, accessor, {
             get: mixin[prop][accessor]['get'],
-            set: mixin[prop][accessor]['set']
+            set: mixin[prop][accessor]['set'],
+            enumerable: true,
           });
         }
       } else {
-        Object.defineProperty(this, prop, { value: mixin[prop], writable: true });
+        Object.defineProperty(this, prop, { value: mixin[prop], writable: true, enumerable: true });
       }
     }
   }
