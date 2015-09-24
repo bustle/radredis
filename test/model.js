@@ -4,7 +4,16 @@ import Model  from '../src/model';
 
 // SET UP FOR TESTS
 Model.redis = new Redis('redis://127.0.0.1:6379/15');
-class Person extends Model {};
+class Person extends Model {
+  willCreate(){ this.wasWillCreateCalled = true; }
+  willUpdate(){ this.wasWillUpdateCalled = true; }
+  willDestroy(){ this.wasWillDestroyCalled = true; }
+  didCreate(){ this.wasDidCreateCalled = true; }
+  didUpdate(){ this.wasDidUpdateCalled = true; }
+  didDestroy(){ this.wasDidDestroyCalled = true; }
+  didLoad(){ this.wasDidLoadCalled = true; }
+};
+
 Person.redisKey = 'person';
 Person.schema = [
   { key: 'name' },
@@ -49,13 +58,6 @@ describe('Model', () => {
       assert.equal(person.url, null);
     });
 
-  });
-
-  describe('state', () => {
-    it("updating an attribute dirties the model's private state", () => {
-      person.name = 'tristan';
-      assert.equal(person._isDirty, true);
-    });
   });
 
   describe('#create()', () => {
@@ -175,6 +177,76 @@ describe('Model', () => {
           assert.equal(Object.keys(persons).length, 3);
         }).catch((err) => {
           assert.ifError(err);
+      });
+    });
+  });
+
+  describe('State', () => {
+    describe('Accessors', ()=>{
+      it('new unsaved models are clean, not loaded, and new', ()=>{
+        assert.equal(person.isNew, true);
+        assert.equal(person.isDirty, false);
+        assert.equal(person.isLoaded, false);
+      });
+
+      it('saved models are clean, loaded, and not new', ()=>{
+        return person.save().then((person)=>{
+          assert.equal(person.isNew, false);
+          assert.equal(person.isDirty, false);
+          assert.equal(person.isLoaded, true);
+        }).catch((err) => {
+          assert.ifError(err);
+        });
+      });
+    });
+
+    describe('Lifecycle Events', ()=>{
+      it('creating a record triggers willCreate and didCreate events', ()=>{
+        return person.save().then(()=>{
+          assert.equal(person.wasWillCreateCalled, true);
+          assert.equal(person.wasDidCreateCalled, true);
+        }).catch((err) => {
+          assert.ifError(err);
+        });
+      });
+
+      it("updating an attribute dirties the model's private state", () => {
+        person.name = 'tristan';
+        assert.equal(person._isDirty, true);
+      });
+
+      it('updating a record triggers willUpdate and didUpdate events', ()=>{
+        return person.save().then(()=>{
+          return person.save().then(()=>{
+            assert.equal(person.wasWillUpdateCalled, true);
+            assert.equal(person.wasDidUpdateCalled, true);
+          }).catch((err) => {
+            assert.ifError(err);
+          });
+        }).catch((err) => {
+          assert.ifError(err);
+        });
+      });
+
+      it('loading a record triggers the didLoad event', ()=>{
+        return person.save().then(()=>{
+          assert.equal(person.wasDidLoadCalled, true);
+        }).catch((err) => {
+          assert.ifError(err);
+        });
+      });
+
+      it('destroying a record triggers willDestroy and didDestroy events', ()=>{
+        return person.save().then(()=>{
+          return person.destroy().then(()=>{
+            assert.equal(person.wasWillDestroyCalled, true);
+            assert.equal(person.wasDidDestroyCalled, true);
+          }).catch((err) => {
+            assert.ifError(err);
+          });
+        }).catch((err) => {
+          assert.ifError(err);
+        });
       });
     });
   });
