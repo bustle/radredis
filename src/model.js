@@ -1,12 +1,20 @@
-import Promise    from 'bluebird';
-import Config     from './config';
-import CoreObject from './core-object';
-import Attribute  from './model/attribute';
-import Iterator   from './model/iterator';
-import State      from './model/state';
+import Promise      from 'bluebird';
+import EventEmitter from 'events';
+import Config       from './config';
+import Attribute    from './model/attribute';
+import Iterator     from './model/iterator';
 
-class Model extends CoreObject {
+function noop(){return Promise.resolve(this);};
 
+function isFunction(func) {
+  return func && {}.toString.call(func) === '[object Function]';
+}
+
+function tryInvoke(obj, func, data){
+  if ( isFunction(obj[func]) ) { return obj[func](...data); }
+}
+
+class Model extends EventEmitter {
   //class methods
   static get redis() {
     return this._redis || Config.redis;
@@ -82,6 +90,9 @@ class Model extends CoreObject {
   constructor(attributes={}) {
     super();
     this._attributes = attributes;
+    // instance variable defaults
+    this._isDirty    = false;
+    this._isLoaded   = false;
   }
 
   _generateId() {
@@ -113,7 +124,7 @@ class Model extends CoreObject {
           this.redis.hmset(this.redisKey + ':_attributes', this.attributes).then(()=>{
             this.redis.zadd(this.constructor.redisKey + ':_ids', id, id).then(() => {
               Promise.resolve(this.onSaved(true)).then(resolve(this));
-            });         
+            });
           });
         }).catch(reject);
       });
@@ -159,8 +170,50 @@ class Model extends CoreObject {
     });
   }
 
-}
+  //STATE
+  get isNew() { return this.id === undefined; }
+  get isDirty() { return this._isDirty; }
+  set isDirty(bool) { this._isDirty = bool; }
+  get isLoaded() { return this._isLoaded; }
+  set isLoaded(bool) { this._isLoaded = bool; }
 
-Model.includeMixin(State);
+  // instance method hook defaults
+  willCreate:  noop
+  willUpdate:  noop
+  willDestroy: noop
+  didCreate:   noop
+  didUpdate:   noop
+  didDestroy:  noop
+  didLoad:     noop
+
+  willBeSaved() {
+    this._emitEvent(this.isNew ? 'willCreate' : 'willUpdate', this);
+  }
+
+  onSaved(wasNew) {
+    this.onLoaded();
+    this._emitEvent(wasNew ? 'didCreate' : 'didUpdate', this);
+  }
+
+  onLoaded(){
+    this.isDirty = false;
+    this.isLoaded = true;
+    this._emitEvent('didLoad', this);
+  }
+
+  willBeDestroyed() {
+    this._emitEvent('willDestroy', this);
+  }
+
+  onDestroyed() {
+    this._emitEvent('didDestroy', this);
+  }
+
+  _emitEvent(event, data) {
+    tryInvoke(this, event, [data]);
+    this.emit(event, data);
+  }
+
+}
 
 export default Model;
