@@ -2,11 +2,12 @@
 
 ## Goals
 
-- Use json-schema
-- No classes. No `new` keyword
+- Use json-schema for data validation
+- No classes. No `new` keyword. Factory functions
 - Before/After transforms
 - Promise based
 - Pipelining. All redis commands are executed via transaction if possible.
+- iodredis under the hood.
 
 ## Setup
 
@@ -16,6 +17,7 @@ const redisOpts = { db: 15 }
 const transforms = { beforeSave: (model) => { model.title = model.title.toLowerCase(); return model } }
 const schema = {  
   title: 'Post',
+  type: "object"
   properties : {
     title: {
       type: 'string'
@@ -86,6 +88,7 @@ Specify indexed attributes inside json schema:
 ``` js
 const schema = {  
   title: 'Post',
+  type: "object"
   properties : {
     author_id: {
       type: 'number',
