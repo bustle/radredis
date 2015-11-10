@@ -1,23 +1,20 @@
 {
   "name": "radredis",
   "version": "1.0.0",
-  "description": "",
+  "description": "Redis Data Adapter",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint src",
-    "test": "mocha --compilers js:babel/register --recursive",
-    "compile": "rm -rf dist/ && mkdir dist/ && babel src/ --out-file dist/radredis.js && cp package.json dist/"
+    "test": "mocha --compilers js:babel-core/register"
   },
   "author": "Tyler Love",
   "license": "MIT",
   "dependencies": {
-    "bluebird": "^2.9.34",
-    "hiredis": "^0.4.0",
-    "ioredis": "^1.7.3"
+    "babel": "^6.0.15",
+    "expect.js": "^0.3.1",
+    "ioredis": "^1.10.0"
   },
   "devDependencies": {
-    "babel": "^5.8.21",
-    "babel-eslint": "^4.0.5",
-    "mocha": "^2.2.5"
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.1.3",
+    "babel-preset-es2015": "^6.1.2"
   }
 }

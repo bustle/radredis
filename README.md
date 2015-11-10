@@ -3,7 +3,7 @@
 ## Goals
 
 - Use json-schema for data validation
-- No classes. No `new` keyword. Factory functions
+- No classes. No `new` keyword. Factory functions.
 - Before/After transforms
 - Promise based
 - Pipelining. All redis commands are executed via transaction if possible.
