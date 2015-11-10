@@ -1,26 +1,23 @@
 const radredis = require('../index')
 const flush = require('./flushdb')
+const redisOpts = require('./redis-opts')
 const expect = require('expect.js')
 const Promise = require('bluebird')
-const schema = { title: 'Post' }
-const Post = radredis(schema)
 
 describe('Radredis', function() {
-
-  before(function(){
-    return flush().then(function(){
-      return Promise.all([
-        Post.create({title: 'test'}),
-        Post.create({title: 'test'}),
-        Post.create({title: 'test'})
-      ])
-    })
-  })
-
   describe('#find', function(){
-    it('should be a function', function(){
-      expect(Post.find).to.be.a('function')
-    });
+    const schema = { title: 'Post' }
+    const Post = radredis(schema, {}, redisOpts)
+
+    before(function(){
+      return flush().then(function(){
+        return Promise.all([
+          Post.create({title: 'test'}),
+          Post.create({title: 'test'}),
+          Post.create({title: 'test'})
+        ])
+      })
+    })
 
     it('should return a list of attributes', function(){
       return Post.find(1).then((results)=>{
@@ -28,10 +25,18 @@ describe('Radredis', function() {
       })
     })
 
-    it('should return a single result', function(){
-      return Post.find(1).then((result)=>{
-        expect(result).to.be.an('object')
-        expect(result).to.not.be.empty()
+    it('should return an id', function(){
+      return Post.find(1).then((results)=>{
+        expect(results[0].id).to.be.a('number')
+      })
+    })
+
+    it('should return a single result with timestamps', function(){
+      return Post.find(1).then((posts)=>{
+        expect(posts[0]).to.be.an('object')
+        expect(posts[0]).to.not.be.empty()
+        expect(posts[0].created_at).to.be.an('number')
+        expect(posts[0].updated_at).to.be.an('number')
       })
     })
 
@@ -42,4 +47,47 @@ describe('Radredis', function() {
       })
     })
   })
+
+  describe('#find - coercion', function() {
+    let post
+
+    const schema = {
+      title: 'Post',
+      type: 'object',
+      properties: {
+        primary_media: { type: 'object' },
+        title: { type: 'string' },
+        bodies: { type: 'array' }
+      }
+    }
+
+    const attributes = {
+      title: 'test',
+      primary_media: {
+        author_id: 5,
+        url: 'http://example.com'
+      },
+      bodies: [
+        { version: 2 },
+        { version: 3 }
+      ]
+    }
+
+    const Post = radredis(schema, {}, redisOpts)
+
+    before(()=>{
+      return Post.create(attributes)
+      .get('id')
+      .then(Post.find)
+      .then((result) => post = result[0] )
+    })
+
+    it('should return a parsed array', function(){
+      expect(post.bodies).to.be.an('array')
+    })
+
+    it('should return a parsed object', function(){
+      expect(post.primary_media).to.be.an('object')
+    })
+  });
 });
