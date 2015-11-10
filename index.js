@@ -6,7 +6,7 @@ const _ = require('lodash')
 // Shares the same redis connection everywhere. May need to alter later
 let redis
 
-module.exports = function(schema, transforms = {}, redisOpts = {}){
+module.exports = function(schema, hooks = {}, redisOpts = {}){
   const modelKeyspace = schema.title.toLowerCase()
   // const validate = validator(schema)
 
@@ -43,7 +43,7 @@ module.exports = function(schema, transforms = {}, redisOpts = {}){
         ])
         .then(() => transaction.exec() )
         .return(_.assign({ id }, attributes))
-        .then(coerceFromRedis)
+        .then(deserialize)
       })
     },
 
@@ -53,7 +53,7 @@ module.exports = function(schema, transforms = {}, redisOpts = {}){
         attributes.updated_at = Date.now()
         return saveAttributes(id, attributes)
         .return(_.assign({ id }, attributes))
-        .then(coerceFromRedis)
+        .then(deserialize)
       })
     }
   }
@@ -65,8 +65,8 @@ module.exports = function(schema, transforms = {}, redisOpts = {}){
 
   function saveAttributes(id, attributes, transaction){
     transaction = transaction || redis
-    return coerceToRedis(attributes)
-    .then((transformedAttributes) => transaction.hmset(`${id}:attributes`, transformedAttributes ))
+    return serialize(attributes)
+    .then((serializedAttrs) => transaction.hmset(`${id}:attributes`, serializedAttrs ))
   }
 
   function updatePrimaryKeyIndex(id, transaction){
@@ -85,10 +85,10 @@ module.exports = function(schema, transforms = {}, redisOpts = {}){
       attributes.id = ids[index]
       return attributes
     })
-    .map(coerceFromRedis)
+    .map(deserialize)
   }
 
-  function coerceFromRedis(attributes){
+  function deserialize(attributes){
     attributes.id = parseInt(attributes.id, 10)
     attributes.created_at = parseInt(attributes.created_at, 10)
     attributes.updated_at = parseInt(attributes.updated_at, 10)
@@ -102,7 +102,7 @@ module.exports = function(schema, transforms = {}, redisOpts = {}){
 
 }
 
-function coerceToRedis(attributes){
+function serialize(attributes){
   _.forOwn(attributes, (val, key)=>{
     if (_.isObject(val)){
       attributes[key] = JSON.stringify(val)
@@ -110,8 +110,6 @@ function coerceToRedis(attributes){
   })
   return Promise.resolve(attributes)
 }
-
-
 
 function resultToObject(result){
   if (result[0]){

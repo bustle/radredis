@@ -48,7 +48,7 @@ describe('Radredis', function() {
     })
   })
 
-  describe('#find - coercion', function() {
+  describe('#find - with serialization', function() {
     let post
 
     const schema = {
