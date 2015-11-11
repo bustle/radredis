@@ -1,5 +1,8 @@
 # Radredis
 
+Radredis is a node data adapter for redis.
+It is not a full ORM but a simple opinionated interface for storing application data in redis.  
+
 ## Goals
 
 - Use json-schema for data validation
@@ -13,8 +16,8 @@
 
 ``` js
 const Radredis = require('radredis')
-const redisOpts = { db: 15 }
-const transforms = { beforeSave: (model) => { model.title = model.title.toLowerCase(); return model } }
+const redisOpts = { db: 15, keyPrefix: 'your-app:' }
+const transforms = { beforeSave: (model) => model.title = model.title.toLowerCase() }
 const schema = {  
   title: 'Post',
   type: "object"
@@ -42,11 +45,11 @@ Post.all({ limit: 2, offset: 10 })
 // => [ post, post ]
 
 // All by index
+// NOT YET IMPLEMENTED
 Post.all({ index: 'author_id', order: 'desc'} )
 ```
 
 ## Find
-
 - Always returns an array
 
 ``` js
@@ -82,10 +85,16 @@ Post.delete(1)
 ```
 
 ## Validation
+
+*NOT IMPLEMENTED*
+
 Validation is handled by json-schema (http://json-schema.org/examples.html)
 Functions return promise rejections if bad data
 
 ## Indexing
+
+*NOT IMPLEMENTED*
+
 Specify indexed attributes inside json schema:
 ``` js
 const schema = {  
@@ -103,13 +112,10 @@ const schema = {
 
 ## Transforms
 
+*Currently only `beforeSave` is implemented*
+
 ``` js
 {
-  beforeSave: (model) => { /*do stuff*/; return model},
-  afterSave: (model) => { /*do stuff*/; return model},
-  beforeCreate: (model) => { /*do stuff*/; return model},
-  afterCreate: (model) => { /*do stuff*/; return model},
-  beforeUpdate: (model) => { /*do stuff*/; return model},
-  afterUpdate: (model) => { /*do stuff*/; return model}
+  beforeSave: (model) => { /*do stuff*/; return model}
 }
 ```
