@@ -19,7 +19,7 @@ describe('Radredis', function() {
     })
   })
 
-  describe('#all', function(){
+  describe('.all', function(){
 
     it('should return all results', function(){
       Post.all().then((posts)=>{

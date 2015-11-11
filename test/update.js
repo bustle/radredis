@@ -2,14 +2,16 @@ const radredis = require('../index')
 const flush = require('./flushdb')
 const redisOpts = require('./redis-opts')
 const expect = require('expect.js')
+const sinon = require('sinon')
 const schema = { title: 'Post' }
-const Post = radredis(schema, {}, redisOpts)
 
 describe('Radredis', function() {
-  describe('#update', function(){
+  describe('.update', function(){
 
     describe('id does not exist', function(){
       before(flush)
+
+      const Post = radredis(schema, {}, redisOpts)
 
       it('should throw an error', ()=>{
         return Post.update(27, {})
@@ -24,6 +26,7 @@ describe('Radredis', function() {
     })
 
     describe('id exists', function(){
+      const Post = radredis(schema, {}, redisOpts)
       let post
 
       before(function(){
@@ -42,6 +45,17 @@ describe('Radredis', function() {
         expect(post.created_at).to.be.a('number')
         expect(post.updated_at).to.be.a('number')
         expect(post.updated_at).to.not.eql(post.created_at)
+      })
+    })
+
+    describe('beforeSave hook', function(){
+      it('should call the beforeSave hook', function(){
+        const spy = sinon.spy()
+        const Post = radredis(schema, { }, redisOpts)
+        const PostWithHook = radredis(schema, { beforeSave: spy }, redisOpts)
+        Post.create({ title: 'Title'})
+        .then((post) => PostWithHook.update(post.id, { title: 'New Title'}))
+        .then(()=> expect(spy.calledOnce).to.be.ok())
       })
     })
   })

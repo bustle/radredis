@@ -19,41 +19,32 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
   redis = redis || new Redis(redisOpts)
 
   return {
-    all: function(params = {}){
+    all: (params = {}) => {
       const limit = params.limit || 30
       const offset = params.offset || 0
       return redis.zrevrange('indexes:id', offset, offset + limit - 1)
       .then(findByIds)
     },
 
-    find: function(...ids){
-      return findByIds(ids)
-    },
+    find: (...ids) => findByIds(ids),
 
-    create: function(attributes){
+    create: attributes => {
       return redis.incr('id')
       .then(function(id){
-        const transaction = redis.multi()
         const now = Date.now()
         attributes.created_at = now
         attributes.updated_at = now
-        return Promise.all([
-          saveAttributes(id, attributes, transaction),
-          updatePrimaryKeyIndex(id, transaction),
-        ])
-        .then(() => transaction.exec() )
-        .return(_.assign({ id }, attributes))
-        .then(deserialize)
+        if (hooks.beforeSave) { hooks.beforeSave(attributes) }
+        return save(id, attributes)
       })
     },
 
-    update: function(id, attributes){
+    update: (id, attributes) => {
       return findByIds([id]).get(0).then((oldAttributes)=>{
         attributes.created_at = oldAttributes.created_at
         attributes.updated_at = Date.now()
-        return saveAttributes(id, attributes)
-        .return(_.assign({ id }, attributes))
-        .then(deserialize)
+        if (hooks.beforeSave) { hooks.beforeSave(attributes) }
+        return save(id, attributes)
       })
     }
   }
@@ -63,10 +54,14 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
     return transaction.hgetall(`${id}:attributes`)
   }
 
-  function saveAttributes(id, attributes, transaction){
-    transaction = transaction || redis
+  function save(id, attributes){
+    const transaction = redis.multi()
     return serialize(attributes)
-    .then((serializedAttrs) => transaction.hmset(`${id}:attributes`, serializedAttrs ))
+    .then( serializedAttrs => transaction.hmset(`${id}:attributes`, serializedAttrs ))
+    .then( () => updatePrimaryKeyIndex(id, transaction) )
+    .then( () => transaction.exec() )
+    .return(_.assign({ id }, attributes))
+    .then(deserialize)
   }
 
   function updatePrimaryKeyIndex(id, transaction){
@@ -78,7 +73,7 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
     const transaction = redis.multi()
 
     return Promise.resolve(ids)
-    .map((id) => getAttributes(id, transaction))
+    .map(id => getAttributes(id, transaction))
     .then(() => transaction.exec() )
     .map(resultToObject)
     .map((attributes, index) => {

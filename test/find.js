@@ -5,7 +5,7 @@ const expect = require('expect.js')
 const Promise = require('bluebird')
 
 describe('Radredis', function() {
-  describe('#find', function(){
+  describe('.find', function(){
     const schema = { title: 'Post' }
     const Post = radredis(schema, {}, redisOpts)
 
