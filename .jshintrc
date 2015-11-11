@@ -1,42 +1,13 @@
 {
-  // Global variables
-  "predef": {
-    "JSON": true,
-    "Ember": true
-  },
-  
-  // Enforcing options
-  "curly": true,
-  "eqeqeq": true,
+  "node": true,
   "esnext": true,
-  "forin": true,
-  "immed": true,
+  "eqeqeq": true,
+  "indent": 2,
+  "latedef": "nofunc",
   "newcap": true,
-  "noarg": true,
-  "noempty": false,
-  "nonew": false,
-  "plusplus": false,
-  "strict": false,
   "undef": true,
   "unused": true,
-
-  // Relaxing options
-  "boss" : true,
-  "debug": false,
-  "esnext": true,
-  "eqnull": true,
-  "evil": true,
-  "laxbreak": false,
-  "sub": true,
-
-  // Env
-  "browser" : true,
-  "devel": false,
-
-  // Unsupported
-  "nomen": false,
-  "onevar": false,
-  "regexp": false,
-  "white": false,
-  "indent": 2
+  "mocha": true,
+  "asi": true,
+  "predef": [ "-Promise" ]
 }
