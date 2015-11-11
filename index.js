@@ -48,7 +48,7 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
     },
 
     update: function(id, attributes){
-      return findByIds([id]).then((oldAttributes)=>{
+      return findByIds([id]).get(0).then((oldAttributes)=>{
         attributes.created_at = oldAttributes.created_at
         attributes.updated_at = Date.now()
         return saveAttributes(id, attributes)
