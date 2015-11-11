@@ -57,7 +57,8 @@ describe('Radredis', function() {
       properties: {
         primary_media: { type: 'object' },
         title: { type: 'string' },
-        bodies: { type: 'array' }
+        bodies: { type: 'array' },
+        type: { type: 'integer'}
       }
     }
 
@@ -70,7 +71,8 @@ describe('Radredis', function() {
       bodies: [
         { version: 2 },
         { version: 3 }
-      ]
+      ],
+      type: 1
     }
 
     const Post = radredis(schema, {}, redisOpts)
@@ -88,6 +90,10 @@ describe('Radredis', function() {
 
     it('should return a parsed object', function(){
       expect(post.primary_media).to.be.an('object')
+    })
+
+    it('should return a parsed integer', function(){
+      expect(post.type).to.be.a('number')
     })
   });
 });

@@ -96,6 +96,9 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
       if (value.type === 'array' || value.type === 'object'){
         attributes[key] = JSON.parse(attributes[key])
       }
+      if (value.type === 'integer'){
+        attributes[key] = parseInt(attributes[key], 10)
+      }
     })
     return attributes
   }

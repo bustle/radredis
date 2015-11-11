@@ -42,7 +42,6 @@ describe('Radredis', function() {
         expect(post.created_at).to.be.a('number')
         expect(post.updated_at).to.be.a('number')
         expect(post.updated_at).to.not.eql(post.created_at)
-        Post.find(1).then(console.log)
       })
     })
   })
