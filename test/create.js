@@ -1,4 +1,4 @@
-const radredis = require('../index')
+const radredis = require('../src')
 const flush = require('./flushdb')
 const redisOpts = require('./redis-opts')
 const expect = require('expect.js')
