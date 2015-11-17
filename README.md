@@ -1,5 +1,7 @@
 # Radredis
 
+[![Build Status](https://travis-ci.org/bustlelabs/radredis.svg)](https://travis-ci.org/bustlelabs/radredis)
+
 Radredis is a node data adapter for redis.
 It is not a full ORM but a simple opinionated interface for storing application data in redis.  
 
