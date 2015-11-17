@@ -3,8 +3,9 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 // const validator = require('is-my-json-valid')
 
-module.exports = function(schema, hooks = {}, redisOpts = {}){
+module.exports = function(schema, hooks = {}, opts = {}){
   const modelKeyspace = schema.title.toLowerCase()
+  const redisOpts = _.clone(opts)
   // const validate = validator(schema)
   const indexedAttributes = _.reduce(schema.properties, (res, val, key) => {
     if (schema.properties[key].index === true){ res.push(key) }
@@ -12,7 +13,7 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
   }, ['id', 'created_at', 'updated_at'])
 
   if (redisOpts.keyPrefix){
-    redisOpts.keyPrefix = redisOpts.keyPrefix + modelKeyspace + ':'
+    redisOpts.keyPrefix = opts.keyPrefix + modelKeyspace + ':'
   } else {
     redisOpts.keyPrefix = modelKeyspace
   }
