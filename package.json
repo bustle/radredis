@@ -12,6 +12,7 @@
   "author": "Tyler Love",
   "license": "MIT",
   "dependencies": {
+    "babel-core": "^6.1.21",
     "ioredis": "^1.10.0",
     "lodash": "^3.10.1"
   },
