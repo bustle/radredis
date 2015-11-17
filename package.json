@@ -9,7 +9,7 @@
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register",
     "prepublish": "npm run compile"
   },
-  "author": "Tyler Love",
+  "contributors": ["Tyler Love <tyler@bustle.com", "Steve Faulkner <steve@bustle.com>"],
   "license": "MIT",
   "dependencies": {
     "bluebird": "^3.0.5",
