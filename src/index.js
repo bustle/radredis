@@ -3,12 +3,13 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 // const validator = require('is-my-json-valid')
 
-// Shares the same redis connection everywhere. May need to alter later
-let redis
-
 module.exports = function(schema, hooks = {}, redisOpts = {}){
   const modelKeyspace = schema.title.toLowerCase()
   // const validate = validator(schema)
+  const indexedAttributes = _.reduce(schema.properties, (res, val, key) => {
+    if (schema.properties[key].index === true){ res.push(key) }
+    return res
+  }, ['id', 'created_at', 'updated_at'])
 
   if (redisOpts.keyPrefix){
     redisOpts.keyPrefix = redisOpts.keyPrefix + modelKeyspace + ':'
@@ -16,17 +17,20 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
     redisOpts.keyPrefix = modelKeyspace
   }
 
-  redis = redis || new Redis(redisOpts)
+  const redis = new Redis(redisOpts)
 
   return {
+    _redis: redis,
+
     all: (params = {}) => {
       const limit = params.limit || 30
       const offset = params.offset || 0
       return redis.zrevrange('indexes:id', offset, offset + limit - 1)
       .then(findByIds)
+      .tap(() => redis.disconnect({ reconnect: true }) )
     },
 
-    find: (...ids) => findByIds(ids),
+    find: (...ids) => findByIds(ids).tap( () => redis.disconnect({ reconnect: true }) ),
 
     create: attributes => {
       return redis.incr('id')
@@ -56,18 +60,26 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
 
   function save(id, attributes){
     const transaction = redis.multi()
+    attributes.id = id
     return serialize(attributes)
     .then( serializedAttrs => transaction.hmset(`${id}:attributes`, serializedAttrs ))
-    .then( () => updatePrimaryKeyIndex(id, transaction) )
+    .then( () => updateIndexes(id, attributes, indexedAttributes, transaction) )
     .then( () => transaction.exec() )
-    .return(_.assign({ id }, attributes))
+    .return(attributes)
     .then(deserialize)
   }
 
-  function updatePrimaryKeyIndex(id, transaction){
-    transaction = transaction || redis
-    return transaction.zadd('indexes:id', id, id);
+  function updateIndexes(id, attributes, indexedAttributes, transaction){
+    return Promise.resolve(indexedAttributes).map(key => {
+      if ( attributes[key] === null || typeof attributes[key] === 'undefined'){
+        return transaction.zrem('indexes:' + key, id)
+      } else {
+        return transaction.zadd('indexes:' + key, attributes[key], id)
+      }
+    })
   }
+
+
 
   function findByIds(ids){
     const transaction = redis.multi()
@@ -88,11 +100,13 @@ module.exports = function(schema, hooks = {}, redisOpts = {}){
     attributes.created_at = parseInt(attributes.created_at, 10)
     attributes.updated_at = parseInt(attributes.updated_at, 10)
     _.forEach(schema.properties, (value, key) => {
-      if (value.type === 'array' || value.type === 'object'){
-        attributes[key] = JSON.parse(attributes[key])
-      }
-      if (value.type === 'integer'){
-        attributes[key] = parseInt(attributes[key], 10)
+      if (attributes[key] !== undefined){
+        if (value.type === 'array' || value.type === 'object'){
+          attributes[key] = JSON.parse(attributes[key])
+        }
+        if (value.type === 'integer'){
+          attributes[key] = parseInt(attributes[key], 10)
+        }
       }
     })
     return attributes
