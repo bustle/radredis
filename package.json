@@ -5,8 +5,9 @@
   "main": "lib/index.js",
   "repository": "https://github.com/bustlelabs/radredis",
   "scripts": {
-    "build": "babel -d lib/ src/",
-    "test": "mocha --compilers js:babel-core/register"
+    "compile": "babel -d lib/ src/",
+    "test": "mocha --compilers js:babel-core/register",
+    "prepublish": "npm run compile"
   },
   "author": "Tyler Love",
   "license": "MIT",

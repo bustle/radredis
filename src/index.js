@@ -28,28 +28,29 @@ module.exports = function(schema, hooks = {}, opts = {}){
       const offset = params.offset || 0
       return redis.zrevrange('indexes:id', offset, offset + limit - 1)
       .then(findByIds)
-      .tap(() => redis.disconnect({ reconnect: true }) )
     },
 
-    find: (...ids) => findByIds(ids).tap( () => redis.disconnect({ reconnect: true }) ),
+    find: (...ids) => findByIds(ids),
 
     create: attributes => {
       return redis.incr('id')
       .then(function(id){
         const now = Date.now()
+        attributes.id = id
         attributes.created_at = now
         attributes.updated_at = now
         if (hooks.beforeSave) { hooks.beforeSave(attributes) }
-        return save(id, attributes)
+        return save(attributes)
       })
     },
 
     update: (id, attributes) => {
       return findByIds([id]).get(0).then((oldAttributes)=>{
+        attributes.id = oldAttributes.id
         attributes.created_at = oldAttributes.created_at
         attributes.updated_at = Date.now()
         if (hooks.beforeSave) { hooks.beforeSave(attributes) }
-        return save(id, attributes)
+        return save(attributes)
       })
     }
   }
@@ -59,23 +60,22 @@ module.exports = function(schema, hooks = {}, opts = {}){
     return transaction.hgetall(`${id}:attributes`)
   }
 
-  function save(id, attributes){
+  function save(attributes){
     const transaction = redis.multi()
-    attributes.id = id
     return serialize(attributes)
-    .then( serializedAttrs => transaction.hmset(`${id}:attributes`, serializedAttrs ))
-    .then( () => updateIndexes(id, attributes, indexedAttributes, transaction) )
+    .then( serializedAttrs => transaction.hmset(`${attributes.id}:attributes`, serializedAttrs ))
+    .then( () => updateIndexes(attributes, indexedAttributes, transaction) )
     .then( () => transaction.exec() )
     .return(attributes)
     .then(deserialize)
   }
 
-  function updateIndexes(id, attributes, indexedAttributes, transaction){
+  function updateIndexes(attributes, indexedAttributes, transaction){
     return Promise.resolve(indexedAttributes).map(key => {
       if ( attributes[key] === null || typeof attributes[key] === 'undefined'){
-        return transaction.zrem('indexes:' + key, id)
+        return transaction.zrem('indexes:' + key, attributes.id)
       } else {
-        return transaction.zadd('indexes:' + key, attributes[key], id)
+        return transaction.zadd('indexes:' + key, attributes[key], attributes.id)
       }
     })
   }
