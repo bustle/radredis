@@ -1,6 +1,6 @@
 {
   "name": "radredis",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Redis Data Adapter",
   "main": "lib/index.js",
   "repository": "https://github.com/bustlelabs/radredis",
@@ -9,7 +9,10 @@
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register",
     "prepublish": "npm run compile"
   },
-  "contributors": ["Tyler Love <tyler@bustle.com", "Steve Faulkner <steve@bustle.com>"],
+  "contributors": [
+    "Tyler Love <tyler@bustle.com",
+    "Steve Faulkner <steve@bustle.com>"
+  ],
   "license": "MIT",
   "dependencies": {
     "bluebird": "^3.0.5",
