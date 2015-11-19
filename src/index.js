@@ -103,7 +103,7 @@ module.exports = function(schema, hooks = {}, opts = {}){
     _.forEach(schema.properties, (value, key) => {
       if (attributes[key] !== undefined){
         if (value.type === 'array' || value.type === 'object'){
-          attributes[key] = JSON.parse(attributes[key])
+          if(attributes[key]){ attributes[key] = JSON.parse(attributes[key]) }
         }
         if (value.type === 'integer'){
           attributes[key] = parseInt(attributes[key], 10)
