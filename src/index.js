@@ -1,7 +1,6 @@
 const Redis = require('ioredis')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const babel = require("babel-core")
 // const validator = require('is-my-json-valid')
 
 module.exports = function(schema, hooks = {}, opts = {}){
