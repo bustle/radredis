@@ -1,6 +1,7 @@
 const Redis = require('ioredis')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const babel = require("babel-core")
 // const validator = require('is-my-json-valid')
 
 module.exports = function(schema, hooks = {}, opts = {}){
@@ -103,7 +104,11 @@ module.exports = function(schema, hooks = {}, opts = {}){
     _.forEach(schema.properties, (value, key) => {
       if (attributes[key] !== undefined){
         if (value.type === 'array' || value.type === 'object'){
-          if(attributes[key]){ attributes[key] = JSON.parse(attributes[key]) }
+          if(attributes[key]){
+            attributes[key] = JSON.parse(attributes[key])
+          } else {
+            attributes[key] = null
+          }
         }
         if (value.type === 'integer'){
           attributes[key] = parseInt(attributes[key], 10)
