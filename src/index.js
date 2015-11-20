@@ -52,6 +52,10 @@ module.exports = function(schema, hooks = {}, opts = {}){
         if (hooks.beforeSave) { hooks.beforeSave(attributes) }
         return save(attributes)
       })
+    },
+
+    delete: id => {
+      return findByIds([id]).get(0).then(destroy)
     }
   }
 
@@ -70,17 +74,29 @@ module.exports = function(schema, hooks = {}, opts = {}){
     .then(deserialize)
   }
 
+  function destroy(attributes) {
+    const transaction = redis.multi()
+    const id = attributes.id
+
+    return Promise.map(indexedAttributes, (index) => removeFromIndex(id, index, transaction))
+      .then( () => transaction.del(`${id}:attributes`) )
+      .then( () => transaction.exec() )
+      .return(attributes)
+  }
+
   function updateIndexes(attributes, indexedAttributes, transaction){
     return Promise.resolve(indexedAttributes).map(key => {
       if ( attributes[key] === null || typeof attributes[key] === 'undefined'){
-        return transaction.zrem('indexes:' + key, attributes.id)
+        return removeFromIndex(attributes.id, key, transaction)
       } else {
         return transaction.zadd('indexes:' + key, attributes[key], attributes.id)
       }
     })
   }
 
-
+  function removeFromIndex(id, index, transaction) {
+    return transaction.zrem('indexes:' + index, id);
+  }
 
   function findByIds(ids){
     const transaction = redis.multi()
