@@ -44,7 +44,7 @@ describe('Radredis', () => {
           .then((result) => post = result)
       })
 
-      it('should delete an attributes key', () => {
+      it('should not find a deleted id', () => {
         return Post.find(post.id)
           .then(...expectModelNotFound)
       })
