@@ -1,6 +1,6 @@
 {
   "name": "radredis",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Redis Data Adapter",
   "main": "lib/index.js",
   "repository": "https://github.com/bustlelabs/radredis",
