@@ -49,7 +49,7 @@ module.exports = function(schema, hooks = {}, opts = {}){
         attributes.id = oldAttributes.id
         attributes.created_at = oldAttributes.created_at
         attributes.updated_at = Date.now()
-        if (hooks.beforeSave) { hooks.beforeSave(attributes) }
+        if (hooks.beforeSave) { hooks.beforeSave(attributes, oldAttributes) }
         return save(attributes)
       })
     },

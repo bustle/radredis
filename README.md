@@ -95,8 +95,6 @@ Functions return promise rejections if bad data
 
 ## Indexing
 
-*NOT IMPLEMENTED*
-
 Specify indexed attributes inside json schema:
 ``` js
 const schema = {  
@@ -117,7 +115,9 @@ const schema = {
 *Currently only `beforeSave` is implemented*
 
 ``` js
+
+// Note oldAttributes will be undefined on create
 {
-  beforeSave: (model) => { /*do stuff*/; return model}
+  beforeSave: (attributes, oldAttributes) => { /*do stuff to attributes*/}
 }
 ```
