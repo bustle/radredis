@@ -51,6 +51,20 @@ Post.all({ limit: 2, offset: 10 })
 Post.all({ index: 'author_id', order: 'desc'} )
 ```
 
+## Scan
+
+``` js
+const stream = Post.scan()
+stream.on('data', (post) => { console.log(post) })
+stream.on('end', () => { console.log( 'Read all posts!') }
+
+// => { id: 1, title: 'A title', author_id: 1 },
+// => { id: 2, title: 'Another title', author_id: 2 }
+// ...
+// => Read all posts!
+```
+
+
 ## Find
 - Always returns an array
 
