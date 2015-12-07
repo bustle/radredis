@@ -31,6 +31,7 @@ describe('Radredis', function() {
 
       before(function(){
         return Post.create({ title: 'Old title' })
+        .delay(1000)
         .then((result) => Post.update(result.id, {title: 'New title'}))
         .then((result) => post = result )
       })

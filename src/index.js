@@ -1,6 +1,7 @@
 const Redis = require('ioredis')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const through2 = require('through2')
 // const validator = require('is-my-json-valid')
 
 module.exports = function(schema, hooks = {}, opts = {}){
@@ -56,6 +57,15 @@ module.exports = function(schema, hooks = {}, opts = {}){
 
     delete: id => {
       return findByIds([id]).get(0).then(destroy)
+    },
+
+    scan: () => {
+      return redis.zscanStream('indexes:id')
+      .pipe(through2.obj(function (keys, enc, callback) {
+        findByIds(_.pluck(_.chunk(keys, 2),0))
+        .map((objs) => { this.push(objs) })
+        .then(() => callback() )
+      }))
     }
   }
 
