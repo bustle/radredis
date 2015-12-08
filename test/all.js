@@ -50,14 +50,14 @@ describe('Radredis', function() {
 
     // Talking to redis is pretty hacky, but this checks existing behavior since no public API exists
     it('should add/update indexed attribtues', function(){
-      return Post._redis.zrangebyscore('indexes:author_id', 3, 3)
+      return Post._redis.zrangebyscore('post:indexes:author_id', 3, 3)
       .then(res => expect(res.length).to.eql(2))
     })
 
     it('should remove indexed attribtues set to null', function(){
       return Post.update(4, { author_id: null })
       .then(()=>{
-        return Post._redis.zrangebyscore('indexes:author_id', 3, 3)
+        return Post._redis.zrangebyscore('post:indexes:author_id', 3, 3)
       })
       .then((res)=>{
         expect(res.length).to.eql(1)

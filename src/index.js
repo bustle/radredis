@@ -4,22 +4,15 @@ const _ = require('lodash')
 const through2 = require('through2')
 // const validator = require('is-my-json-valid')
 
-module.exports = function(schema, hooks = {}, opts = {}){
+module.exports = function(schema, hooks, port, host, options){
   const modelKeyspace = schema.title.toLowerCase()
-  const redisOpts = _.clone(opts)
   // const validate = validator(schema)
   const indexedAttributes = _.reduce(schema.properties, (res, val, key) => {
     if (schema.properties[key].index === true){ res.push(key) }
     return res
   }, ['id', 'created_at', 'updated_at'])
 
-  if (redisOpts.keyPrefix){
-    redisOpts.keyPrefix = opts.keyPrefix + modelKeyspace + ':'
-  } else {
-    redisOpts.keyPrefix = modelKeyspace
-  }
-
-  const redis = new Redis(redisOpts)
+  const redis = new Redis(port, host, options)
 
   return {
     _redis: redis,
@@ -27,20 +20,20 @@ module.exports = function(schema, hooks = {}, opts = {}){
     all: (params = {}) => {
       const limit = params.limit || 30
       const offset = params.offset || 0
-      return redis.zrevrange('indexes:id', offset, offset + limit - 1)
+      return redis.zrevrange(`${modelKeyspace}:indexes:id`, offset, offset + limit - 1)
       .then(findByIds)
     },
 
     find: (...ids) => findByIds(ids),
 
     create: attributes => {
-      return redis.incr('id')
+      return redis.incr(`${modelKeyspace}:id`)
       .then(function(id){
         const now = Date.now()
         attributes.id = id
         attributes.created_at = now
         attributes.updated_at = now
-        if (hooks.beforeSave) { hooks.beforeSave(attributes) }
+        if (hooks && hooks.beforeSave) { hooks.beforeSave(attributes) }
         return save(attributes)
       })
     },
@@ -50,7 +43,7 @@ module.exports = function(schema, hooks = {}, opts = {}){
         attributes.id = oldAttributes.id
         attributes.created_at = oldAttributes.created_at
         attributes.updated_at = Date.now()
-        if (hooks.beforeSave) { hooks.beforeSave(attributes, oldAttributes) }
+        if (hooks && hooks.beforeSave) { hooks.beforeSave(attributes, oldAttributes) }
         return save(attributes)
       })
     },
@@ -60,7 +53,7 @@ module.exports = function(schema, hooks = {}, opts = {}){
     },
 
     scan: () => {
-      return redis.zscanStream('indexes:id')
+      return redis.zscanStream(`${modelKeyspace}:indexes:id`)
       .pipe(through2.obj(function (keys, enc, callback) {
         findByIds(_.pluck(_.chunk(keys, 2),0))
         .map((objs) => { this.push(objs) })
@@ -71,13 +64,13 @@ module.exports = function(schema, hooks = {}, opts = {}){
 
   function getAttributes(id, transaction){
     transaction = transaction || redis
-    return transaction.hgetall(`${id}:attributes`)
+    return transaction.hgetall(`${modelKeyspace}:${id}:attributes`)
   }
 
   function save(attributes){
     const transaction = redis.multi()
     return serialize(attributes)
-    .then( serializedAttrs => transaction.hmset(`${attributes.id}:attributes`, serializedAttrs ))
+    .then( serializedAttrs => transaction.hmset(`${modelKeyspace}:${attributes.id}:attributes`, serializedAttrs ))
     .then( () => updateIndexes(attributes, indexedAttributes, transaction) )
     .then( () => transaction.exec() )
     .return(attributes)
@@ -89,7 +82,7 @@ module.exports = function(schema, hooks = {}, opts = {}){
     const id = attributes.id
 
     return Promise.map(indexedAttributes, (index) => removeFromIndex(id, index, transaction))
-      .then( () => transaction.del(`${id}:attributes`) )
+      .then( () => transaction.del(`${modelKeyspace}:${id}:attributes`) )
       .then( () => transaction.exec() )
       .return(attributes)
   }
@@ -99,13 +92,13 @@ module.exports = function(schema, hooks = {}, opts = {}){
       if ( attributes[key] === null || typeof attributes[key] === 'undefined'){
         return removeFromIndex(attributes.id, key, transaction)
       } else {
-        return transaction.zadd('indexes:' + key, attributes[key], attributes.id)
+        return transaction.zadd(`${modelKeyspace}:indexes:${key}`, attributes[key], attributes.id)
       }
     })
   }
 
   function removeFromIndex(id, index, transaction) {
-    return transaction.zrem('indexes:' + index, id);
+    return transaction.zrem(`${modelKeyspace}:indexes:${index}`, id);
   }
 
   function findByIds(ids){

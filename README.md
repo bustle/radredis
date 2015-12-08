@@ -36,6 +36,17 @@ const schema = {
 const Post = Radredis(schema, transforms, redisOpts)
 ```
 
+## Redis configuration
+
+The final three arguments to `Radredis` are passed through to `ioredis`. See their documentation for more info: https://github.com/luin/ioredis/blob/master/API.md#new_Redis_new
+
+Examples:
+
+``` js
+// Radredis(schema, transforms, [port], [host], [options])
+const Post = Radredis(schema, transforms, 6557)
+```
+
 ## All
 
 ``` js
