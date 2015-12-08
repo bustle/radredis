@@ -44,7 +44,9 @@ Examples:
 
 ``` js
 // Radredis(schema, transforms, [port], [host], [options])
-const Post = Radredis(schema, transforms, 6557)
+const Post = Radredis(schema, transforms, {db: 15})
+const Post = Radredis(schema, transforms, 6379, 'localhost', {db: 15})
+const Post = Radredis(schema, transforms, 'redis://user:password@localhost:6379/15')
 ```
 
 ## All
