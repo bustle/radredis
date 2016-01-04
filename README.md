@@ -75,6 +75,16 @@ stream.on('end', () => { console.log( 'Read all posts!') }
 // => { id: 2, title: 'Another title', author_id: 2 }
 // ...
 // => Read all posts!
+
+// You can scan only a specific index by passing the index name to scan
+const stream = Post.scan('published_at')
+stream.on('data', (post) => { console.log(post) })
+stream.on('end', () => { console.log( 'Read only published posts!') }
+
+// => { id: 1, title: 'A title', author_id: 1 },
+// => { id: 2, title: 'Another title', author_id: 2 }
+// ...
+// => Read only published posts!
 ```
 
 
