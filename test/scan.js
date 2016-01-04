@@ -21,7 +21,7 @@ describe('Radredis', function() {
         Post.create({title: 'test', author_id: 1 }),
         Post.create({title: 'test', author_id: 2 }),
         Post.create({title: 'test', author_id: 3 }),
-        Post.create({title: 'test', author_id: 3 })
+        Post.create({title: 'test', author_id: null })
       ])
     })
   })
@@ -37,6 +37,19 @@ describe('Radredis', function() {
       })
       stream.on('end', ()=>{
         expect(count).to.eql(4)
+        done()
+      })
+    })
+
+    it('should return only results in the index', function(done){
+      const stream = Post.scan('author_id')
+      let count = 0
+      stream.on('data', (data) => {
+        expect(data).to.be.an(Object)
+        count++
+      })
+      stream.on('end', ()=>{
+        expect(count).to.eql(3)
         done()
       })
     })
