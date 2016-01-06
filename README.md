@@ -60,8 +60,11 @@ Post.all({ limit: 2, offset: 10 })
 // => [ post, post ]
 
 // All by index
-// NOT YET IMPLEMENTED
-Post.all({ index: 'author_id', order: 'desc'} )
+// Note order is currently always descending
+Post.all({ index: 'author_id' } )
+
+// Return only certain properties
+Post.all({ properties: ['author_id'] } )
 ```
 
 ## Scan

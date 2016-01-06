@@ -6,7 +6,12 @@ const Promise = require('bluebird')
 
 describe('Radredis', function() {
   describe('.find', function(){
-    const schema = { title: 'Post' }
+    const schema = {
+      title: 'Post',
+      properties: {
+        title: { type: 'string' }
+      }
+    }
     const Post = radredis(schema, {}, redisOpts)
 
     before(function(){

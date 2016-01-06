@@ -48,13 +48,21 @@ describe('Radredis', function() {
       })
     })
 
-    it('should accept an index parameter', function(){
-      return Post.all({index: 'author_id'}).then((posts)=>{
+    it('should accept a properties parameter', function(){
+      return Post.all({properties: ['author_id']}).then((posts)=>{
+        expect(posts.length).to.eql(4)
+        posts.map((post) => {
+          expect(post).to.only.have.keys('id', 'author_id', 'updated_at', 'created_at');
+        })
+      })
+    })
+
+    it('should accept a properties parameter and index parameter', function(){
+      return Post.all({ index: 'author_id', properties: ['author_id']}).then((posts)=>{
         expect(posts.length).to.eql(3)
         posts.map((post) => {
-          expect(post.id).to.not.eql(2)
+          expect(post).to.only.have.keys('id', 'author_id', 'updated_at', 'created_at');
         })
-        expect(posts[0].author_id).to.eql(3)
       })
     })
 
