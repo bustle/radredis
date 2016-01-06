@@ -4,13 +4,15 @@ const _ = require('lodash')
 const through2 = require('through2')
 // const validator = require('is-my-json-valid')
 
+const systemProps = ['id', 'created_at', 'updated_at']
+
 module.exports = function(schema, hooks, port, host, options){
   const modelKeyspace = schema.title.toLowerCase()
   // const validate = validator(schema)
   const indexedAttributes = _.reduce(schema.properties, (res, val, key) => {
     if (schema.properties[key].index === true){ res.push(key) }
     return res
-  }, ['id', 'created_at', 'updated_at'])
+  }, systemProps)
 
   const redis = new Redis(port, host, options)
 
@@ -22,7 +24,9 @@ module.exports = function(schema, hooks, port, host, options){
       const offset = params.offset || 0
       const index = params.index || 'id'
       return redis.zrevrange(`${modelKeyspace}:indexes:${index}`, offset, offset + limit - 1)
-      .then(findByIds)
+      .then((ids)=>{
+        return findByIds(ids, params.properties)
+      })
     },
 
     find: (...ids) => findByIds(ids),
@@ -63,9 +67,13 @@ module.exports = function(schema, hooks, port, host, options){
     }
   }
 
-  function getAttributes(id, transaction){
+  function getAttributes(id, transaction, props){
     transaction = transaction || redis
-    return transaction.hgetall(`${modelKeyspace}:${id}:attributes`)
+    if (props){
+      return transaction.hmget(`${modelKeyspace}:${id}:attributes`, props)
+    } else {
+      return transaction.hgetall(`${modelKeyspace}:${id}:attributes`)
+    }
   }
 
   function save(attributes){
@@ -102,18 +110,28 @@ module.exports = function(schema, hooks, port, host, options){
     return transaction.zrem(`${modelKeyspace}:indexes:${index}`, id);
   }
 
-  function findByIds(ids){
+  function findByIds(ids, props){
     const transaction = redis.multi()
 
+    if (props) { props = systemProps.concat(props) }
+
     return Promise.resolve(ids)
-    .map(id => getAttributes(id, transaction))
+    .map(id => getAttributes(id, transaction, props))
     .then(() => transaction.exec() )
-    .map(resultToObject)
+    .then(resultsToObjects)
     .map((attributes, index) => {
       attributes.id = ids[index]
       return attributes
     })
     .map(deserialize)
+
+    function resultsToObjects(results){
+      if (props){
+        return hmgetToObjects(results, props)
+      } else {
+        return hgetallToObjects(results)
+      }
+    }
   }
 
   function deserialize(attributes){
@@ -136,7 +154,6 @@ module.exports = function(schema, hooks, port, host, options){
     })
     return attributes
   }
-
 }
 
 function serialize(attributes){
@@ -148,12 +165,18 @@ function serialize(attributes){
   return Promise.resolve(attributes)
 }
 
-function resultToObject(result){
-  if (result[0]){
-    throw result[0]
-  }
-  if (result[1].length === 0 ){
-    throw new Error('Model not found')
-  }
-  return _.zipObject(_.chunk(result[1],2))
+function hmgetToObjects(results, props){
+  return results.map(([err, values])=>{
+    if (err){ throw err }
+    if (values.length === 0 ){ throw new Error('Model not found') }
+    return _.zipObject(props, values)
+  })
+}
+
+function hgetallToObjects(results){
+  return results.map(([err, values])=>{
+    if (err){ throw err }
+    if (values.length === 0 ){ throw new Error('Model not found') }
+    return _.zipObject(_.chunk(values,2))
+  })
 }
