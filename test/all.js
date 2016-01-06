@@ -18,7 +18,7 @@ describe('Radredis', function() {
     return flush().then(function(){
       return Promise.all([
         Post.create({title: 'test', author_id: 1 }),
-        Post.create({title: 'test', author_id: 2 }),
+        Post.create({title: 'test', author_id: null }),
         Post.create({title: 'test', author_id: 3 }),
         Post.create({title: 'test', author_id: 3 })
       ])
@@ -39,12 +39,22 @@ describe('Radredis', function() {
       })
     })
 
-    it('should accept parameters', function(){
+    it('should accept limit and offset parameters', function(){
       return Post.all({limit: 2, offset: 1}).then((posts)=>{
         expect(posts.length).to.eql(2)
         posts.map((post) => {
           expect(post.id).to.not.eql(1)
         })
+      })
+    })
+
+    it('should accept an index parameter', function(){
+      return Post.all({index: 'author_id'}).then((posts)=>{
+        expect(posts.length).to.eql(3)
+        posts.map((post) => {
+          expect(post.id).to.not.eql(2)
+        })
+        expect(posts[0].author_id).to.eql(3)
       })
     })
 

@@ -20,7 +20,8 @@ module.exports = function(schema, hooks, port, host, options){
     all: (params = {}) => {
       const limit = params.limit || 30
       const offset = params.offset || 0
-      return redis.zrevrange(`${modelKeyspace}:indexes:id`, offset, offset + limit - 1)
+      const index = params.index || 'id'
+      return redis.zrevrange(`${modelKeyspace}:indexes:${index}`, offset, offset + limit - 1)
       .then(findByIds)
     },
 
