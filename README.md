@@ -90,6 +90,16 @@ stream.on('end', () => { console.log( 'Read only published posts!') }
 // => Read only published posts!
 ```
 
+``` js
+// Return only specific fields
+const stream = Post.scan('published_at', ['author_id'])
+stream.on('data', (post) => { console.log(post) })
+
+// => { id: 1, author_id: 1 },
+// => { id: 2, author_id: 2 }
+// ...
+```
+
 
 ## Find
 - Always returns an array

@@ -57,10 +57,11 @@ module.exports = function(schema, hooks, port, host, options){
       return findByIds([id]).get(0).then(destroy)
     },
 
-    scan: (index = 'id') => {
+    scan: (index, props) => {
+      index = index || 'id'
       return redis.zscanStream(`${modelKeyspace}:indexes:${index}`)
       .pipe(through2.obj(function (keys, enc, callback) {
-        findByIds(_.pluck(_.chunk(keys, 2),0))
+        findByIds(_.pluck(_.chunk(keys, 2),0), props)
         .map((objs) => { this.push(objs) })
         .then(() => callback() )
       }))

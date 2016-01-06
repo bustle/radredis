@@ -53,5 +53,19 @@ describe('Radredis', function() {
         done()
       })
     })
+
+    it('should return only specified properties', function(done){
+      const stream = Post.scan('author_id', ['author_id'])
+      let count = 0
+      stream.on('data', (data) => {
+        expect(data).to.be.an(Object)
+        expect(data).to.only.have.keys('id', 'author_id', 'updated_at', 'created_at');
+        count++
+      })
+      stream.on('end', ()=>{
+        expect(count).to.eql(3)
+        done()
+      })
+    })
   })
 });
