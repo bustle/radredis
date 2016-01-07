@@ -162,12 +162,12 @@ const schema = {
 
 ## Transforms
 
-*Currently only `beforeSave` is implemented*
 
 ``` js
 
 // Note oldAttributes will be undefined on create
 {
-  beforeSave: (attributes, oldAttributes) => { /*do stuff to attributes*/}
+  beforeSave: (attributes, oldAttributes) => { /*do stuff to attributes*/},
+  afterSave: (savedAttributes) => { /*do stuff with attributes*/}
 }
 ```
