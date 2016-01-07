@@ -5,8 +5,9 @@ const expect = require('expect.js')
 const sinon = require('sinon')
 
 const schema = { title: 'Post' }
-const spy = sinon.spy()
-const Post = radredis(schema, { beforeSave: spy }, redisOpts)
+const beforeSave = sinon.spy()
+const afterSave = sinon.spy()
+const Post = radredis(schema, { beforeSave, afterSave }, redisOpts)
 
 describe('Radredis', function() {
   before(flush)
@@ -37,7 +38,11 @@ describe('Radredis', function() {
     })
 
     it('should call the beforeSave hook', function(){
-      expect(spy.calledOnce).to.be.ok()
+      expect(beforeSave.calledOnce).to.be.ok()
+    })
+
+    it('should call the afterSave hook', function(){
+      expect(afterSave.calledOnce).to.be.ok()
     })
   })
 });

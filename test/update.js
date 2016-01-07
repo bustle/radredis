@@ -49,16 +49,19 @@ describe('Radredis', function() {
       })
     })
 
-    describe('beforeSave hook', function(){
-      it('should call the beforeSave hook', function(){
-        const spy = sinon.spy()
+    describe('hooks', function(){
+      it('should call the beforeSave and afterSave hooks', function(){
+        const beforeSave = sinon.spy()
+        const afterSave = sinon.spy()
         const Post = radredis(schema, { }, redisOpts)
-        const PostWithHook = radredis(schema, { beforeSave: spy }, redisOpts)
+        const PostWithHook = radredis(schema, { beforeSave, afterSave }, redisOpts)
         return Post.create({ title: 'Title'})
         .then((post) => PostWithHook.update(post.id, { title: 'New Title'}))
         .then(()=> {
-          expect(spy.calledOnce).to.be.ok()
-          expect(spy.calledWithMatch({ title: 'New Title'}, { title: 'Title'})).to.be.ok()
+          expect(beforeSave.calledOnce).to.be.ok()
+          expect(beforeSave.calledWithMatch({ title: 'New Title'}, { title: 'Title'})).to.be.ok()
+          expect(afterSave.calledOnce).to.be.ok()
+          expect(afterSave.calledWithMatch({ title: 'New Title'})).to.be.ok()
         })
       })
     })
