@@ -41,6 +41,7 @@ module.exports = function(schema, hooks, port, host, options){
         if (hooks && hooks.beforeSave) { hooks.beforeSave(attributes) }
         return save(attributes)
       })
+      .then(runAfterSave)
     },
 
     update: (id, attributes) => {
@@ -51,6 +52,7 @@ module.exports = function(schema, hooks, port, host, options){
         if (hooks && hooks.beforeSave) { hooks.beforeSave(attributes, oldAttributes) }
         return save(attributes)
       })
+      .then(runAfterSave)
     },
 
     delete: id => {
@@ -65,6 +67,14 @@ module.exports = function(schema, hooks, port, host, options){
         .map((objs) => { this.push(objs) })
         .then(() => callback() )
       }))
+    }
+  }
+
+  function runAfterSave(attributes) {
+    if (hooks && hooks.afterSave) {
+      return Promise.resolve(hooks.afterSave(attributes)).return(attributes)
+    } else {
+      return Promise.resolve(attributes)
     }
   }
 
