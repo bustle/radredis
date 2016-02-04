@@ -19,17 +19,21 @@ module.exports = function(schema, hooks, port, host, options){
   return {
     _redis: redis,
 
-    all: (params = {}) => {
-      const limit = params.limit || 30
-      const offset = params.offset || 0
-      const index = params.index || 'id'
+    all: ({ properties, limit = 30, offset = 0, index = 'id' } = {}) => {
       return redis.zrevrange(`${modelKeyspace}:indexes:${index}`, offset, offset + limit - 1)
       .then((ids)=>{
-        return findByIds(ids, params.properties)
+        return findByIds(ids, properties)
       })
     },
 
     find: (...ids) => findByIds(ids),
+
+    range: ({ min, max, properties, limit = 30, offset = 0, index = 'id' }) => {
+      return redis.zrevrangebyscore(`${modelKeyspace}:indexes:${index}`, max, min, 'LIMIT', offset, offset + limit - 1)
+      .then((ids)=>{
+        return findByIds(ids, properties)
+      })
+    },
 
     create: attributes => {
       return redis.incr(`${modelKeyspace}:id`)

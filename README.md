@@ -67,6 +67,25 @@ Post.all({ index: 'author_id' } )
 Post.all({ properties: ['author_id'] } )
 ```
 
+## Range
+
+Allows for retrieving records by range of values for an attribute.
+- Results ordered in descending value
+- Results are inclusive of `min` and `max`
+- `min`, `max`, and `index` are required
+
+``` js
+Post.range({ index: 'author_id', min: 1, max: 2})
+// => [ post, post, post, ...]
+
+// Also accepts limit and offset
+Post.range({ index: 'author_id', min: 1, max: 2, limit: 2, offset: 10 })
+// => [ post, post ]
+
+// Return only certain properties
+Post.range({ index: 'author_id', min: 1, max: 2, properties: ['author_id'] })
+```
+
 ## Scan
 
 ``` js
