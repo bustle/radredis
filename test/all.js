@@ -1,8 +1,9 @@
-const radredis = require('../src')
-const flush = require('./flushdb')
-const redisOpts = require('./redis-opts')
-const expect = require('expect.js')
-const Promise = require('bluebird')
+import radredis  from '../src'
+import flush     from './flushdb'
+import redisOpts from './redis-opts'
+import expect    from 'expect.js'
+import Promise   from 'bluebird'
+
 const schema = {
   title: 'Post',
   properties: {

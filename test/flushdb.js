@@ -1,7 +1,8 @@
-const Redis = require('ioredis')
-const redisOpts = require('./redis-opts')
+import Redis     from 'ioredis'
+import redisOpts from './redis-opts'
+
 const redis = new Redis(redisOpts)
 
-module.exports = function(){
+export default function() {
   return redis.flushdb()
 }
