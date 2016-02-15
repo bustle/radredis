@@ -26,7 +26,7 @@ module.exports = function(schema, hooks, port, host, options){
       })
     },
 
-    find: (...ids) => findByIds(ids),
+    find: (obj) => Array.isArray(obj) ? findByIds(obj) : findByIds([obj]).get(0),
 
     range: ({ min, max, properties, limit = 30, offset = 0, index = 'id' }) => {
       return redis.zrevrangebyscore(`${modelKeyspace}:indexes:${index}`, max, min, 'LIMIT', offset, offset + limit - 1)
