@@ -25,28 +25,28 @@ describe('Radredis', function() {
     })
 
     it('should return a list of attributes', function(){
-      return Post.find(1).then((results)=>{
-        expect(results[0].title).to.eql('test')
+      return Post.find(1).then((post)=>{
+        expect(post.title).to.eql('test')
       })
     })
 
     it('should return an id', function(){
-      return Post.find(1).then((results)=>{
-        expect(results[0].id).to.be.a('number')
+      return Post.find(1).then((result)=>{
+        expect(result.id).to.be.a('number')
       })
     })
 
     it('should return a single result with timestamps', function(){
-      return Post.find(1).then((posts)=>{
-        expect(posts[0]).to.be.an('object')
-        expect(posts[0]).to.not.be.empty()
-        expect(posts[0].created_at).to.be.an('number')
-        expect(posts[0].updated_at).to.be.an('number')
+      return Post.find(1).then((post)=>{
+        expect(post).to.be.an('object')
+        expect(post).to.not.be.empty()
+        expect(post.created_at).to.be.an('number')
+        expect(post.updated_at).to.be.an('number')
       })
     })
 
     it('should return multiple results', function(){
-      return Post.find(1, 2, 3).then((results)=>{
+      return Post.find([1, 2, 3]).then((results)=>{
         expect(results.length).to.eql(3)
         results.map((result) => expect(result).to.not.be.empty() )
       })
@@ -86,7 +86,7 @@ describe('Radredis', function() {
       return Post.create(attributes)
       .get('id')
       .then(Post.find)
-      .then((result) => post = result[0] )
+      .then((result) => post = result )
     })
 
     it('should return a parsed array', function(){

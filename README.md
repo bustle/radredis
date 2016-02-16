@@ -121,15 +121,15 @@ stream.on('data', (post) => { console.log(post) })
 
 
 ## Find
-- Always returns an array
+
 
 ``` js
 // Find one
 Post.find(1)
-// => [ { id: 1, title: 'A title', author_id: 1 } ]
+// => { id: 1, title: 'A title', author_id: 1 }
 
 // Find multiple
-Post.find(1, 2, 3)
+Post.find([1, 2, 3])
 // => [ { id: 1, title: 'A title', author_id: 1 }, { id: 2, title: 'Another title', author_id: 2 } ]
 ```
 
