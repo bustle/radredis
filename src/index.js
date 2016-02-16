@@ -1,14 +1,12 @@
-const Redis = require('ioredis')
-const Promise = require('bluebird')
-const _ = require('lodash')
-const through2 = require('through2')
-// const validator = require('is-my-json-valid')
+import Redis    from 'ioredis'
+import Promise  from 'bluebird'
+import _        from 'lodash'
+import through2 from 'through2'
 
 const systemProps = ['id', 'created_at', 'updated_at']
 
-module.exports = function(schema, hooks, port, host, options){
+export default function(schema, hooks, port, host, options){
   const modelKeyspace = schema.title.toLowerCase()
-  // const validate = validator(schema)
   const indexedAttributes = _.reduce(schema.properties, (res, val, key) => {
     if (schema.properties[key].index === true){ res.push(key) }
     return res
@@ -67,7 +65,7 @@ module.exports = function(schema, hooks, port, host, options){
       index = index || 'id'
       return redis.zscanStream(`${modelKeyspace}:indexes:${index}`)
       .pipe(through2.obj(function (keys, enc, callback) {
-        findByIds(_.pluck(_.chunk(keys, 2),0), props)
+        findByIds(_.map(_.chunk(keys, 2), '0'), props)
         .map((objs) => { this.push(objs) })
         .then(() => callback() )
       }))
@@ -126,7 +124,7 @@ module.exports = function(schema, hooks, port, host, options){
   }
 
   function findByIds(ids, props){
-    const transaction = redis.multi()
+    const transaction = redis.pipeline()
 
     if (props) { props = systemProps.concat(props) }
 
@@ -141,11 +139,13 @@ module.exports = function(schema, hooks, port, host, options){
     .map(deserialize)
 
     function resultsToObjects(results){
-      if (props){
-        return hmgetToObjects(results, props)
-      } else {
-        return hgetallToObjects(results)
-      }
+      return results.map(([err, values]) => {
+        if (err) { throw err }
+        if (_.isEmpty(values)) { throw new Error ('Model not found') }
+        return props
+          ? _.zipObject(props, values)
+          : values
+      })
     }
   }
 
@@ -178,20 +178,4 @@ function serialize(attributes){
     }
   })
   return Promise.resolve(attributes)
-}
-
-function hmgetToObjects(results, props){
-  return results.map(([err, values])=>{
-    if (err){ throw err }
-    if (values.length === 0 ){ throw new Error('Model not found') }
-    return _.zipObject(props, values)
-  })
-}
-
-function hgetallToObjects(results){
-  return results.map(([err, values])=>{
-    if (err){ throw err }
-    if (values.length === 0 ){ throw new Error('Model not found') }
-    return _.zipObject(_.chunk(values,2))
-  })
 }

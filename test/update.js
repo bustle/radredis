@@ -1,8 +1,9 @@
-const radredis = require('../src')
-const flush = require('./flushdb')
-const redisOpts = require('./redis-opts')
-const expect = require('expect.js')
-const sinon = require('sinon')
+import radredis  from '../src'
+import flush     from './flushdb'
+import redisOpts from './redis-opts'
+import expect    from 'expect.js'
+import sinon     from 'sinon'
+
 const schema = { title: 'Post' }
 
 describe('Radredis', function() {
