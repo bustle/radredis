@@ -63,7 +63,10 @@ describe('Radredis', function() {
         primary_media: { type: 'object' },
         title: { type: 'string' },
         bodies: { type: 'array' },
-        type: { type: 'integer'}
+        type: { type: 'integer'},
+        float: { type: 'number' },
+        trueBool: { type: 'boolean' },
+        falseBool: { type: 'boolean' }
       }
     }
 
@@ -77,7 +80,10 @@ describe('Radredis', function() {
         { version: 2 },
         { version: 3 }
       ],
-      type: 1
+      type: 1,
+      float: 1.2345,
+      trueBool: true,
+      falseBool: false
     }
 
     const Post = radredis(schema, {}, redisOpts)
@@ -99,6 +105,16 @@ describe('Radredis', function() {
 
     it('should return a parsed integer', function(){
       expect(post.type).to.be.a('number')
+    })
+
+    it('should return a parsed float', function(){
+      expect(post.float).to.be.a('number')
+    })
+
+    it('should return a parsed boolean', function(){
+      console.log(post)
+      expect(post.trueBool).to.be(true)
+      expect(post.falseBool).to.be(false)
     })
   });
 });
