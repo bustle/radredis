@@ -112,8 +112,9 @@ describe('Radredis', function() {
     })
 
     it('should return a parsed boolean', function(){
-      expect(post.trueBool).to.be.a('boolean')
-      expect(post.falseBool).to.be.a('boolean')
+      console.log(post)
+      expect(post.trueBool).to.be(true)
+      expect(post.falseBool).to.be(false)
     })
   });
 });

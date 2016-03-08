@@ -167,7 +167,7 @@ export default function(schema, hooks, port, host, options){
         }
         if (value.type === 'boolean'){
           if (attributes[key] === 'false'){ attributes[key] = false }
-          if (attributes[key] === 'true'){ attributes[key] = false }
+          if (attributes[key] === 'true'){ attributes[key] = true }
         }
         if (value.type === 'number'){
           attributes[key] = parseFloat(attributes[key], 10)
