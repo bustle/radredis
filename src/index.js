@@ -165,6 +165,13 @@ export default function(schema, hooks, port, host, options){
         if (value.type === 'integer'){
           attributes[key] = parseInt(attributes[key], 10)
         }
+        if (value.type === 'boolean'){
+          if (attributes[key] === 'false'){ attributes[key] = false }
+          if (attributes[key] === 'true'){ attributes[key] = false }
+        }
+        if (value.type === 'number'){
+          attributes[key] = parseFloat(attributes[key], 10)
+        }
       }
     })
     return attributes
