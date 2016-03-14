@@ -2,9 +2,9 @@ import radredis  from '../src'
 import flush     from './flushdb'
 import redisOpts from './redis-opts'
 import expect    from 'expect.js'
-import sinon     from 'sinon'
 
-const schema = { title: 'Post' }
+const schema = { title: 'Post', properties: { title: 'string' } }
+const Post = radredis(redisOpts).Model(schema)
 
 describe('Radredis', function() {
   describe('.update', function(){
@@ -12,7 +12,6 @@ describe('Radredis', function() {
     describe('id does not exist', function(){
       before(flush)
 
-      const Post = radredis(schema, {}, redisOpts)
 
       it('should throw an error', ()=>{
         return Post.update(27, {})
@@ -27,7 +26,6 @@ describe('Radredis', function() {
     })
 
     describe('id exists', function(){
-      const Post = radredis(schema, {}, redisOpts)
       let post
 
       before(function(){
@@ -49,7 +47,7 @@ describe('Radredis', function() {
         expect(post.updated_at).to.not.eql(post.created_at)
       })
     })
-
+/*  TODO: restore this test, hooks are now script fragments
     describe('hooks', function(){
       it('should call the beforeSave and afterSave hooks', function(){
         const beforeSave = sinon.spy()
@@ -65,6 +63,6 @@ describe('Radredis', function() {
           expect(afterSave.calledWithMatch({ title: 'New Title'})).to.be.ok()
         })
       })
-    })
+    })*/
   })
 });

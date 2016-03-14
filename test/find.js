@@ -12,7 +12,7 @@ describe('Radredis', function() {
         title: { type: 'string' }
       }
     }
-    const Post = radredis(schema, {}, redisOpts)
+    const Post = radredis(redisOpts).Model(schema)
 
     before(function(){
       return flush().then(function(){
@@ -86,7 +86,7 @@ describe('Radredis', function() {
       falseBool: false
     }
 
-    const Post = radredis(schema, {}, redisOpts)
+    const Post = radredis(redisOpts).Model(schema)
 
     before(()=>{
       return Post.create(attributes)
@@ -112,7 +112,6 @@ describe('Radredis', function() {
     })
 
     it('should return a parsed boolean', function(){
-      console.log(post)
       expect(post.trueBool).to.be(true)
       expect(post.falseBool).to.be(false)
     })

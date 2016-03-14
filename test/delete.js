@@ -2,9 +2,6 @@ import radredis  from '../src'
 import flush     from './flushdb'
 import redisOpts from './redis-opts'
 import expect    from 'expect.js'
-import sinon     from 'sinon'
-
-const spy = sinon.spy()
 
 const schema = {
   title: 'Post',
@@ -13,7 +10,7 @@ const schema = {
     author_id: { type: 'integer', index: true }
   }
 }
-const Post = radredis(schema, { beforeSave: spy }, redisOpts)
+const Post = radredis(redisOpts).Model(schema)
 
 const expectModelNotFound = [
   (result) => expect(result).to.be(undefined),
