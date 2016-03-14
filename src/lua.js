@@ -120,3 +120,23 @@ return model
 `
 
 // Edge scripts
+
+const eset = `
+
+`
+
+const emoveup = `
+
+`
+
+const emovedown = `
+
+`
+
+const edelete = `
+
+`
+
+const edeleteall = `
+
+`

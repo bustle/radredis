@@ -81,3 +81,17 @@ export function DeserializeAttrs(props) {
       .value()
   }
 }
+
+export function chunkScores(results) {
+  return _.chunk(results, 2)
+}
+
+export function BuildEdge(type, from) {
+  function (to, position) {
+    return { type
+           , from
+           , to
+           , position
+           }
+  }
+}
