@@ -2,12 +2,9 @@ import radredis  from '../src'
 import flush     from './flushdb'
 import redisOpts from './redis-opts'
 import expect    from 'expect.js'
-import sinon     from 'sinon'
 
-const schema = { title: 'Post' }
-const beforeSave = sinon.spy()
-const afterSave = sinon.spy()
-const Post = radredis(schema, { beforeSave, afterSave }, redisOpts)
+const schema = { title: 'Post', properties: { title: 'string' } }
+const Post = radredis(redisOpts).Model(schema)
 
 describe('Radredis', function() {
   before(flush)
@@ -36,13 +33,13 @@ describe('Radredis', function() {
     it('should set a generated an id', ()=>{
       expect(post.id).to.be.a('number')
     })
-
+/*  TODO: fix these tests, before and after save are scripts not hooks now
     it('should call the beforeSave hook', function(){
       expect(beforeSave.calledOnce).to.be.ok()
     })
 
     it('should call the afterSave hook', function(){
       expect(afterSave.calledOnce).to.be.ok()
-    })
+    })*/
   })
 });

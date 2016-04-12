@@ -11,7 +11,8 @@ const schema = {
     author_id: { type: 'integer', index: true }
   }
 }
-const Post = radredis(schema, {}, redisOpts)
+
+const Post = radredis(redisOpts).Model(schema)
 
 describe('Radredis', function() {
 
@@ -83,4 +84,4 @@ describe('Radredis', function() {
       })
     })
   })
-});
+})
