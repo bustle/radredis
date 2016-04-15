@@ -142,9 +142,7 @@ export default function(schema, hooks, port, host, options){
       return results.map(([err, values]) => {
         if (err) { throw err }
         if (_.isEmpty(values)) { throw new Error ('Model not found') }
-        return props
-          ? _.zipObject(props, values)
-          : values
+        return props ? _.zipObject(props, values) : values
       })
     }
   }

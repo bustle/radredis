@@ -112,7 +112,6 @@ describe('Radredis', function() {
     })
 
     it('should return a parsed boolean', function(){
-      console.log(post)
       expect(post.trueBool).to.be(true)
       expect(post.falseBool).to.be(false)
     })
