@@ -34,7 +34,7 @@ export default function(schema, transforms, port, host, options){
     create: attributes => {
       return generateId()
       .then((oldModel)=>{
-        const model = Object.assign({}, oldModel, sanitize(attributes))
+        const model = _.assign({}, oldModel, sanitize(attributes))
         return [model, null]
       })
       .spread(run('beforeSave'))
@@ -44,7 +44,7 @@ export default function(schema, transforms, port, host, options){
     update: (id, attributes) => {
       return find(id)
       .then((foundModel)=>{
-        const model = Object.assign({}, foundModel, sanitize(attributes))
+        const model = _.assign({}, foundModel, sanitize(attributes))
         return [model, foundModel]
       })
       .spread(run('beforeSave'))
@@ -87,7 +87,7 @@ export default function(schema, transforms, port, host, options){
   }
 
   function replaceAttributes(model, attributes){
-    return Object.assign({}, _.pick(model, 'id', 'created_at', 'updated_at'), attributes)
+    return _.assign({}, _.pick(model, 'id', 'created_at', 'updated_at'), attributes)
   }
 
   function getAttributes(id, transaction, props){
