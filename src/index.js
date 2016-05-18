@@ -5,7 +5,7 @@ import through2 from 'through2'
 
 const systemProps = ['id', 'created_at', 'updated_at']
 
-export default function(schema, hooks, port, host, options){
+export default function(schema, transforms, port, host, options){
   const modelKeyspace = schema.title.toLowerCase()
   const indexedAttributes = _.reduce(schema.properties, (res, val, key) => {
     if (schema.properties[key].index === true){ res.push(key) }
@@ -19,12 +19,10 @@ export default function(schema, hooks, port, host, options){
 
     all: ({ properties, limit = 30, offset = 0, index = 'id' } = {}) => {
       return redis.zrevrange(`${modelKeyspace}:indexes:${index}`, offset, offset + limit - 1)
-      .then((ids)=>{
-        return findByIds(ids, properties)
-      })
+      .then((ids) => findByIds(ids, properties) )
     },
 
-    find: (obj) => Array.isArray(obj) ? findByIds(obj) : findByIds([obj]).get(0),
+    find: find,
 
     range: ({ min, max, properties, limit = 30, offset = 0, index = 'id' }) => {
       return redis.zrevrangebyscore(`${modelKeyspace}:indexes:${index}`, max, min, 'LIMIT', offset, offset + limit - 1)
@@ -34,31 +32,37 @@ export default function(schema, hooks, port, host, options){
     },
 
     create: attributes => {
-      return redis.incr(`${modelKeyspace}:id`)
-      .then(function(id){
-        const now = Date.now()
-        attributes.id = id
-        attributes.created_at = now
-        attributes.updated_at = now
-        if (hooks && hooks.beforeSave) { hooks.beforeSave(attributes) }
-        return save(attributes)
+      return generateId()
+      .then((oldModel)=>{
+        const model = Object.assign({}, oldModel, sanitize(attributes))
+        return [model, null]
       })
-      .then(runAfterSave)
+      .spread(run('beforeSave'))
+      .then(save)
     },
 
     update: (id, attributes) => {
-      return findByIds([id]).get(0).then((oldAttributes)=>{
-        attributes.id = oldAttributes.id
-        attributes.created_at = oldAttributes.created_at
-        attributes.updated_at = Date.now()
-        if (hooks && hooks.beforeSave) { hooks.beforeSave(attributes, oldAttributes) }
-        return save(attributes)
+      return find(id)
+      .then((foundModel)=>{
+        const model = Object.assign({}, foundModel, sanitize(attributes))
+        return [model, foundModel]
       })
-      .then(runAfterSave)
+      .spread(run('beforeSave'))
+      .then(save)
+    },
+
+    replace: (id, attributes) => {
+      return find(id)
+      .then((foundModel)=>{
+        const model = replaceAttributes(foundModel, sanitize(attributes))
+        return [model, foundModel]
+      })
+      .spread(run('beforeSave'))
+      .then(save)
     },
 
     delete: id => {
-      return findByIds([id]).get(0).then(destroy)
+      return find(id).then(destroy)
     },
 
     scan: (index, props) => {
@@ -72,12 +76,18 @@ export default function(schema, hooks, port, host, options){
     }
   }
 
-  function runAfterSave(attributes) {
-    if (hooks && hooks.afterSave) {
-      return Promise.resolve(hooks.afterSave(attributes)).return(attributes)
-    } else {
-      return Promise.resolve(attributes)
+  function run(name) {
+    return function(model, oldModel){
+      if (transforms && transforms[name]) {
+        return Promise.resolve(transforms[name](model, oldModel)).return(model)
+      } else {
+        return Promise.resolve(model)
+      }
     }
+  }
+
+  function replaceAttributes(model, attributes){
+    return Object.assign({}, _.pick(model, 'id', 'created_at', 'updated_at'), attributes)
   }
 
   function getAttributes(id, transaction, props){
@@ -89,38 +99,44 @@ export default function(schema, hooks, port, host, options){
     }
   }
 
-  function save(attributes){
+  function save(model){
     const transaction = redis.multi()
-    return serialize(attributes)
-    .then( serializedAttrs => transaction.hmset(`${modelKeyspace}:${attributes.id}:attributes`, serializedAttrs ))
-    .then( () => updateIndexes(attributes, indexedAttributes, transaction) )
+
+    return updateTimestamps(model)
+    .then(serialize)
+    .then( serializedAttrs => transaction.hmset(`${modelKeyspace}:${model.id}:attributes`, serializedAttrs ))
+    .then( () => updateIndexes(model, indexedAttributes, transaction) )
     .then( () => transaction.exec() )
-    .return(attributes)
-    .then(deserialize)
+    .return(model)
+    .then(run('afterSave'))
   }
 
-  function destroy(attributes) {
+  function destroy(model) {
     const transaction = redis.multi()
-    const id = attributes.id
+    const id = model.id
 
     return Promise.map(indexedAttributes, (index) => removeFromIndex(id, index, transaction))
       .then( () => transaction.del(`${modelKeyspace}:${id}:attributes`) )
       .then( () => transaction.exec() )
-      .return(attributes)
+      .return(model)
   }
 
-  function updateIndexes(attributes, indexedAttributes, transaction){
+  function updateIndexes(model, indexedAttributes, transaction){
     return Promise.resolve(indexedAttributes).map(key => {
-      if ( attributes[key] === null || typeof attributes[key] === 'undefined'){
-        return removeFromIndex(attributes.id, key, transaction)
+      if ( model[key] === null || typeof model[key] === 'undefined'){
+        return removeFromIndex(model.id, key, transaction)
       } else {
-        return transaction.zadd(`${modelKeyspace}:indexes:${key}`, attributes[key], attributes.id)
+        return transaction.zadd(`${modelKeyspace}:indexes:${key}`, model[key], model.id)
       }
     })
   }
 
   function removeFromIndex(id, index, transaction) {
-    return transaction.zrem(`${modelKeyspace}:indexes:${index}`, id);
+    return transaction.zrem(`${modelKeyspace}:indexes:${index}`, id)
+  }
+
+  function find(obj){
+    return Array.isArray(obj) ? findByIds(obj) : findByIds([obj]).get(0)
   }
 
   function findByIds(ids, props){
@@ -174,13 +190,28 @@ export default function(schema, hooks, port, host, options){
     })
     return attributes
   }
+
+  function generateId(){
+    return redis.incr(`${modelKeyspace}:id`).then((id) => { return { id } })
+  }
 }
 
-function serialize(attributes){
-  _.forOwn(attributes, (val, key)=>{
+function sanitize(attributes){
+  return _.omit(attributes, 'id', 'updated_at', 'created_at')
+}
+
+function updateTimestamps(model){
+  const now = Date.now()
+  if (!model.created_at) { model.created_at = now }
+  model.updated_at = now
+  return Promise.resolve(model)
+}
+
+function serialize(model){
+  _.forOwn(model, (val, key)=>{
     if (_.isObject(val)){
-      attributes[key] = JSON.stringify(val)
+      model[key] = JSON.stringify(val)
     }
   })
-  return Promise.resolve(attributes)
+  return Promise.resolve(_.omit(model, 'id'))
 }

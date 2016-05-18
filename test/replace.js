@@ -7,7 +7,7 @@ import sinon     from 'sinon'
 const schema = { title: 'Post' }
 
 describe('Radredis', function() {
-  describe('.update', function(){
+  describe('.replace', function(){
 
     describe('id does not exist', function(){
       before(flush)
@@ -15,7 +15,7 @@ describe('Radredis', function() {
       const Post = radredis(schema, {}, redisOpts)
 
       it('should throw an error', ()=>{
-        return Post.update(27, {})
+        return Post.replace(27, {})
         .then((result)=>{
           expect(result).to.be(undefined)
         },
@@ -33,7 +33,7 @@ describe('Radredis', function() {
       before(function(){
         return Post.create({ title: 'Old title', author: "steve" })
         .delay(1000)
-        .then((result) => Post.update(result.id, { title: 'New title', state: "published" }))
+        .then((result) => Post.replace(result.id, { title: 'New title', state: "published" }))
         .then((result) => post = result )
       })
 
@@ -43,8 +43,8 @@ describe('Radredis', function() {
         expect(post.title).to.eql('New title')
       })
 
-      it('should note remove old attributes', function(){
-        expect(post.author).to.eql("steve")
+      it('should remove old attributes', function(){
+        expect(post.author).to.eql(undefined)
       })
 
       it('should add new attributes', function(){
@@ -65,7 +65,7 @@ describe('Radredis', function() {
         const Post = radredis(schema, { }, redisOpts)
         const PostWithHook = radredis(schema, { beforeSave, afterSave }, redisOpts)
         return Post.create({ title: 'Title'})
-        .then((post) => PostWithHook.update(post.id, { title: 'New Title'}) )
+        .then((post) => PostWithHook.update(post.id, { title: 'New Title'}))
         .then(()=> {
           expect(beforeSave.calledOnce).to.be.ok()
           expect(beforeSave.calledWithMatch({ title: 'New Title'}, { title: 'Title'})).to.be.ok()
