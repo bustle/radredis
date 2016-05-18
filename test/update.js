@@ -32,7 +32,6 @@ describe('Radredis', function() {
 
       before(function(){
         return Post.create({ title: 'Old title', author: "steve" })
-        .delay(1000)
         .then((result) => Post.update(result.id, { title: 'New title', state: "published" }))
         .then((result) => post = result )
       })
@@ -65,7 +64,7 @@ describe('Radredis', function() {
         const Post = radredis(schema, { }, redisOpts)
         const PostWithHook = radredis(schema, { beforeSave, afterSave }, redisOpts)
         return Post.create({ title: 'Title'})
-        .then((post) => PostWithHook.update(post.id, { title: 'New Title'}) )
+        .then((post) => PostWithHook.update(post.id, { title: 'New Title'}))
         .then(()=> {
           expect(beforeSave.calledOnce).to.be.ok()
           expect(beforeSave.calledWithMatch({ title: 'New Title'}, { title: 'Title'})).to.be.ok()
