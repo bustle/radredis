@@ -32,6 +32,7 @@ describe('Radredis', function() {
 
       before(function(){
         return Post.create({ title: 'Old title', author: "steve" })
+        .delay(1000)
         .then((result) => Post.update(result.id, { title: 'New title', state: "published" }))
         .then((result) => post = result )
       })

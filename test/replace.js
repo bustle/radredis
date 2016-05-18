@@ -32,7 +32,7 @@ describe('Radredis', function() {
 
       before(function(){
         return Post.create({ title: 'Old title', author: "steve" })
-        .delay(1000)
+        .delay(1000) // Ensures that updated_at !== created_at
         .then((result) => Post.replace(result.id, { title: 'New title', state: "published" }))
         .then((result) => post = result )
       })
