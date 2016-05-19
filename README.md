@@ -143,8 +143,21 @@ Post.create({title: 'Redis rocks'})
 
 ## Update
 
+Does a partial update of the model. Basically Object.assign(old, new)
+
 ``` js
-Post.update(1, { title: 'A new title'})
+Post.create(1, { author: 5 })
+Post.replace(1, { title: 'A new title'})
+// => {id: 1, title: 'A new title', author: 5 }
+```
+
+## Replace
+
+Completely replaces the model in the database with the provided attributes
+
+``` js
+Post.create(1, { author: 5 })
+Post.replace(1, { title: 'A new title'})
 // => {id: 1, title: 'A new title'}
 ```
 
@@ -186,7 +199,7 @@ const schema = {
 
 // Note oldAttributes will be undefined on create
 {
-  beforeSave: (attributes, oldAttributes) => { /*do stuff to attributes*/},
-  afterSave: (savedAttributes) => { /*do stuff with attributes*/}
+  beforeSave: (oldModel, newModel) => { /*do stuff to attributes*/},
+  afterSave: (savedModel) => { /*do stuff with attributes*/}
 }
 ```
