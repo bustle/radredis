@@ -33,6 +33,10 @@ describe('Radredis', function() {
       expect(post.updated_at).to.be.a('number')
     })
 
+    it('should have equal created_at and updated_at', ()=>{
+      expect(post.updated_at).to.eql(post.created_at)
+    })
+
     it('should set a generated an id', ()=>{
       expect(post.id).to.be.a('number')
     })

@@ -7,7 +7,7 @@ import sinon     from 'sinon'
 const schema = { title: 'Post' }
 
 describe('Radredis', function() {
-  describe('.update', function(){
+  describe('.replace', function(){
 
     describe('id does not exist', function(){
       before(flush)
@@ -15,7 +15,7 @@ describe('Radredis', function() {
       const Post = radredis(schema, {}, redisOpts)
 
       it('should throw an error', ()=>{
-        return Post.update(27, {})
+        return Post.replace(27, {})
         .then((result)=>{
           expect(result).to.be(undefined)
         },
@@ -33,7 +33,7 @@ describe('Radredis', function() {
       before(function(){
         return Post.create({ title: 'Old title', author: "steve" })
         .delay(1000) // Ensures that updated_at !== created_at
-        .then((result) => Post.update(result.id, { title: 'New title', state: "published" }))
+        .then((result) => Post.replace(result.id, { title: 'New title', state: "published" }))
         .then((result) => post = result )
       })
 
@@ -43,8 +43,8 @@ describe('Radredis', function() {
         expect(post.title).to.eql('New title')
       })
 
-      it('should note remove old attributes', function(){
-        expect(post.author).to.eql("steve")
+      it('should remove old attributes', function(){
+        expect(post.author).to.eql(undefined)
       })
 
       it('should add new attributes', function(){
