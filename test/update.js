@@ -4,7 +4,13 @@ import redisOpts from './redis-opts'
 import expect    from 'expect.js'
 import sinon     from 'sinon'
 
-const schema = { title: 'Post' }
+const schema = {
+  title: 'Post',
+  properties: {
+    title: { type: 'string'},
+    bodies: { type: 'array'}
+  }
+}
 
 describe('Radredis', function() {
   describe('.update', function(){
@@ -33,7 +39,7 @@ describe('Radredis', function() {
       before(function(){
         return Post.create({ title: 'Old title', author: "steve" })
         .delay(1000) // Ensures that updated_at !== created_at
-        .then((result) => Post.update(result.id, { title: 'New title', state: "published" }))
+        .then((result) => Post.update(result.id, { title: 'New title', state: "published", bodies: [ 'foo', 'bar'] }))
         .then((result) => post = result )
       })
 
@@ -49,6 +55,10 @@ describe('Radredis', function() {
 
       it('should add new attributes', function(){
         expect(post.state).to.eql("published")
+      })
+
+      it('should return a parsed array', function(){
+        expect(post.bodies).to.be.a('array')
       })
 
       it('should change the updated_at timestamp', function(){

@@ -208,10 +208,12 @@ function updateTimestamps(model){
 }
 
 function serialize(model){
-  _.forOwn(model, (val, key)=>{
+  const serializedModel = _.mapValues(model, (val) => {
     if (_.isObject(val)){
-      model[key] = JSON.stringify(val)
+      return JSON.stringify(val)
+    } else  {
+      return val
     }
   })
-  return Promise.resolve(_.omit(model, 'id'))
+  return Promise.resolve(_.omit(serializedModel, 'id'))
 }
