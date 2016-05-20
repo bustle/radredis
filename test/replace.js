@@ -47,6 +47,12 @@ describe('Radredis', function() {
         expect(post.author).to.eql(undefined)
       })
 
+      it('a subsequent find should not have old attributes', function(){
+        return Post.find(1).then((p)=>{
+          expect(p.author).to.eql(undefined)
+        })
+      })
+
       it('should add new attributes', function(){
         expect(post.state).to.eql("published")
       })
