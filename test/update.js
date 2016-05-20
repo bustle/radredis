@@ -49,7 +49,7 @@ describe('Radredis', function() {
         expect(post.title).to.eql('New title')
       })
 
-      it('should note remove old attributes', function(){
+      it('should not remove old attributes', function(){
         expect(post.author).to.eql("steve")
       })
 
