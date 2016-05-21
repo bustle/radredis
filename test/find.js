@@ -36,6 +36,12 @@ describe('Radredis', function() {
       })
     })
 
+    it('should not return a version number', function(){
+      return Post.find(1).then((result)=>{
+        expect(result._v).to.eql(undefined)
+      })
+    })
+
     it('should return a single result with timestamps', function(){
       return Post.find(1).then((post)=>{
         expect(post).to.be.an('object')
@@ -53,7 +59,30 @@ describe('Radredis', function() {
     })
   })
 
-  describe('#find - with serialization', function() {
+  describe('.find - with versions', function(){
+    const schema = {
+      title: 'Post',
+      properties: {
+        title: { type: 'string', version: true }
+      }
+    }
+    const Post = radredis(schema, {}, redisOpts)
+
+    before(function(){
+      return flush().then(function(){
+        return Post.create({title: 'test'})
+      })
+    })
+
+    it('should return a version number', function(){
+      return Post.find(1).then((result)=>{
+        expect(result._v).to.be.a('number')
+        expect(result._v).to.eql(1)
+      })
+    })
+  })
+
+  describe('.find - with serialization', function() {
     let post
 
     const schema = {
