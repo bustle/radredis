@@ -55,12 +55,24 @@ describe('Radredis', function() {
           expect(versions.length).to.eql(2)
         })
       })
+
+      it('should not create a new version for non-versioned attributes', function(){
+        return Post.update(1, { bodies: [ 'foo' ]}).then((post) =>{
+          expect(post._v).to.eql(2)
+        })
+      })
+
+      it('should create a new version for versioned attributes', function(){
+        return Post.update(1, { title: 'baz' }).then((post) =>{
+          expect(post._v).to.eql(3)
+        })
+      })
     })
 
     describe('adding versions to existing schema', function(){
       const Post = radredis(schema, {}, redisOpts)
       const PostwVersions = radredis(versionedSchema, {}, redisOpts)
-      
+
       let versions
 
       before(function(){
