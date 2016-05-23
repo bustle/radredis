@@ -115,7 +115,7 @@ export default function(schema, transforms, port, host, options){
     const transaction = redis.pipeline()
 
     if (versioned){
-      return Promise.resolve(_.range(1, record._v))
+      return Promise.resolve(_.range(record._v - 1, 0))
       .map(version => getVersionAttributes(record.id, version, transaction) )
       .then(() => transaction.exec() )
       .then(resultsToObjects)
