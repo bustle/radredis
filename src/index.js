@@ -188,6 +188,11 @@ export default function(schema, transforms, port, host, options){
 
     return Promise.map(indexedAttributes, (index) => removeFromIndex(id, index, transaction))
       .then( () => transaction.del(`${keyspace}:${id}:attributes`) )
+      .then( () => {
+          if (record._v){
+            return Promise.all(_.range(1,record._v).map((version) => transaction.del(`${keyspace}:${id}:versions:${version}`)))
+          }
+      })
       .then( () => transaction.exec() )
       .return(record)
   }
