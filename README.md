@@ -168,6 +168,16 @@ Post.delete(1)
 // => {id: 1, title: 'A new title'}
 ```
 
+## Versions
+
+See versioning below. Will return all versions of an object including the most recent one.
+
+``` js
+Post.create({ title: 'foo'})
+Post.update(1, { title: 'bar'})
+// => [ {id: 1, _v: 1, title: 'foo'}, {id: 1, _v: 2, title: 'bar'} ]
+```
+
 ## Validation
 
 *NOT IMPLEMENTED*
@@ -186,6 +196,26 @@ const schema = {
     author_id: {
       type: 'number',
       index: true
+    }
+  }
+}
+```
+
+## Versioning
+
+Specify attributes that should create a new version when changed inside json schema. The version number is in the `_v` key of the record
+``` js
+const schema = {  
+  title: 'Post',
+  type: "object"
+  properties : {
+    author_id: {
+      type: 'number',
+      index: true
+    },
+    title: {
+      type: 'string'
+      version: true
     }
   }
 }

@@ -13,6 +13,13 @@ export default function(schema, transforms, port, host, options){
     return res
   }, systemProps)
 
+  const versionedAttributes = _.reduce(schema.properties, (res, val, key) => {
+    if (schema.properties[key].version === true){ res.push(key) }
+    return res
+  }, [])
+
+  const versioned = versionedAttributes.length > 0
+
   const redis = new Redis(port, host, options)
 
   return {
@@ -24,6 +31,10 @@ export default function(schema, transforms, port, host, options){
     },
 
     find: find,
+
+    versions: (id) => {
+      return find(id).then(getVersions)
+    },
 
     range: ({ min, max, properties, limit = 30, offset = 0, index = 'id' }) => {
       return redis.zrevrangebyscore(`${keyspace}:indexes:${index}`, max, min, 'LIMIT', offset, offset + limit - 1)
@@ -95,19 +106,80 @@ export default function(schema, transforms, port, host, options){
     }
   }
 
+  function getVersionAttributes(id, version, transaction){
+    transaction = transaction || redis
+    return transaction.hgetall(`${keyspace}:${id}:versions:${version}`)
+  }
+
+  function getVersions(record){
+    const transaction = redis.pipeline()
+
+    if (versioned){
+      return Promise.resolve(_.range(1, record._v))
+      .map(version => getVersionAttributes(record.id, version, transaction) )
+      .then(() => transaction.exec() )
+      .then(resultsToObjects)
+      .map((attributes) => {
+        attributes.id = record.id
+        return attributes
+      })
+      .map(deserialize)
+      .then((versions) => [record].concat(versions) )
+    } else {
+      return [ record ]
+    }
+  }
+
   function save(newRecord, oldRecord){
     const transaction = redis.multi()
     const removedKeys = _.difference(_.keys(oldRecord), _.keys(newRecord))
 
+    let newVersion
+    if (versioned) {
+      newVersion = oldRecord ? _.some(versionedAttributes, (attr) => !_.isEqual(newRecord[attr], oldRecord[attr]) ) : true
+    }
+
     return run('beforeSave')(newRecord, oldRecord)
     .then(updateTimestamps)
-    .then(serialize)
-    .then( serializedAttrs => transaction.hmset(`${keyspace}:${newRecord.id}:attributes`, serializedAttrs ))
+    .then(updateVersion)
+    .then(writeVersion)
+    .then(writeAttributes)
     .then( () => updateIndexes(newRecord, transaction) )
     .then( () => removeKeys(newRecord, removedKeys, transaction) )
     .then( () => transaction.exec() )
     .return(newRecord)
     .then(run('afterSave'))
+
+    function writeVersion(){
+      if (versioned && oldRecord){
+        return transaction.hmset(`${keyspace}:${oldRecord.id}:versions:${oldRecord._v}`, serialize(oldRecord))
+      }
+    }
+
+    function writeAttributes(){
+      return transaction.hmset(`${keyspace}:${newRecord.id}:attributes`, serialize(newRecord))
+    }
+
+    function updateVersion() {
+      if (versioned && newVersion === true){
+        if (!oldRecord){
+          newRecord._v = 1
+        } else {
+          if (oldRecord._v){
+            newRecord._v = oldRecord._v + 1
+          } else {
+            newRecord._v = 2
+            oldRecord._v = 1
+          }
+        }
+      }
+    }
+
+    function updateTimestamps(){
+      const now = Date.now()
+      if (!newRecord.created_at) { newRecord.created_at = now }
+      newRecord.updated_at = now
+    }
   }
 
   function destroy(record) {
@@ -116,6 +188,11 @@ export default function(schema, transforms, port, host, options){
 
     return Promise.map(indexedAttributes, (index) => removeFromIndex(id, index, transaction))
       .then( () => transaction.del(`${keyspace}:${id}:attributes`) )
+      .then( () => {
+          if (record._v){
+            return Promise.all(_.range(1,record._v).map((version) => transaction.del(`${keyspace}:${id}:versions:${version}`)))
+          }
+      })
       .then( () => transaction.exec() )
       .return(record)
   }
@@ -150,26 +227,19 @@ export default function(schema, transforms, port, host, options){
     return Promise.resolve(ids)
     .map(id => getAttributes(id, transaction, props))
     .then(() => transaction.exec() )
-    .then(resultsToObjects)
+    .then((results) => resultsToObjects(results, props) )
     .map((attributes, index) => {
       attributes.id = ids[index]
       return attributes
     })
     .map(deserialize)
-
-    function resultsToObjects(results){
-      return results.map(([err, values]) => {
-        if (err) { throw err }
-        if (_.isEmpty(values)) { throw new Error ('Model not found') }
-        return props ? _.zipObject(props, values) : values
-      })
-    }
   }
 
   function deserialize(attributes){
-    attributes.id = parseInt(attributes.id, 10)
-    attributes.created_at = parseInt(attributes.created_at, 10)
-    attributes.updated_at = parseInt(attributes.updated_at, 10)
+    ['id', '_v', 'created_at', 'updated_at'].map((key) => {
+      if( attributes[key] ){ attributes[key] = parseInt(attributes[key], 10) }
+    })
+
     _.forEach(schema.properties, (value, key) => {
       if (attributes[key] !== undefined){
         if (value.type === 'array' || value.type === 'object'){
@@ -199,24 +269,18 @@ export default function(schema, transforms, port, host, options){
   }
 }
 
+function resultsToObjects(results, props){
+  return results.map(([err, values]) => {
+    if (err) { throw err }
+    if (_.isEmpty(values)) { throw new Error ('Model not found') }
+    return props ? _.zipObject(props, values) : values
+  })
+}
+
 function sanitize(attributes){
   return _.omit(attributes, 'id', 'updated_at', 'created_at')
 }
 
-function updateTimestamps(record){
-  const now = Date.now()
-  if (!record.created_at) { record.created_at = now }
-  record.updated_at = now
-  return Promise.resolve(record)
-}
-
 function serialize(record){
-  const serializedRecord = _.mapValues(record, (val) => {
-    if (_.isObject(val)){
-      return JSON.stringify(val)
-    } else  {
-      return val
-    }
-  })
-  return Promise.resolve(_.omit(serializedRecord, 'id'))
+  return _.omit(_.mapValues( record, (val) => _.isObject(val) ? JSON.stringify(val) : val ), 'id')
 }

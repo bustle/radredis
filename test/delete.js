@@ -9,7 +9,7 @@ const spy = sinon.spy()
 const schema = {
   title: 'Post',
   properties: {
-    title: { type: 'string' },
+    title: { type: 'string', version: true },
     author_id: { type: 'integer', index: true }
   }
 }
@@ -36,11 +36,11 @@ describe('Radredis', () => {
     })
 
     describe('id exists', () => {
-      const attrs = { title: 'A Post Title', author_id: 6 }
       let post
 
       before(() => {
-        return Post.create(attrs)
+        return Post.create({ title: 'A Post Title', author_id: 6 })
+          .then((result) => Post.update(result.id, {title: 'new title'}))
           .then((result) => Post.delete(result.id))
           .then((result) => post = result)
       })
@@ -51,14 +51,18 @@ describe('Radredis', () => {
       })
 
       it('should delete from indexed attribute indexes', () => {
+        return Post._redis.exists('post:1:versions:1')
+          .then((result) => expect(result).to.eql(0))
+      })
+
+      it('should delete the old version', () => {
         return Post._redis.zrangebyscore('indexes:author_id', 6, 6)
           .then((result) => expect(result.length).to.eql(0))
       })
 
       it('should return deleted attributes', () => {
-        for(let attr in attrs) {
-          expect(post).to.have.property(attr, attrs[attr])
-        }
+        expect(post).to.have.property('title', 'new title')
+        expect(post).to.have.property('author_id', 6)
       })
     })
   })
