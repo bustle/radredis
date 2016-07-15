@@ -215,8 +215,8 @@ export default function(schema, transforms, port, host, options){
     return transaction.zrem(`${keyspace}:indexes:${index}`, id)
   }
 
-  function find(obj){
-    return Array.isArray(obj) ? findByIds(obj) : findByIds([obj]).get(0)
+  function find(obj, props){
+    return Array.isArray(obj) ? findByIds(obj, props) : findByIds([obj], props).get(0)
   }
 
   function findByIds(ids, props){

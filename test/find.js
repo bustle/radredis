@@ -9,7 +9,8 @@ describe('Radredis', function() {
     const schema = {
       title: 'Post',
       properties: {
-        title: { type: 'string' }
+        title: { type: 'string' },
+        body: { type: 'string' }
       }
     }
     const Post = radredis(schema, {}, redisOpts)
@@ -17,9 +18,9 @@ describe('Radredis', function() {
     before(function(){
       return flush().then(function(){
         return Promise.all([
-          Post.create({title: 'test'}),
-          Post.create({title: 'test'}),
-          Post.create({title: 'test'})
+          Post.create({title: 'test', body: 'hello world'}),
+          Post.create({title: 'test', body: 'hello world'}),
+          Post.create({title: 'test', body: 'hello world'})
         ])
       })
     })
@@ -33,6 +34,13 @@ describe('Radredis', function() {
     it('should return an id', function(){
       return Post.find(1).then((result)=>{
         expect(result.id).to.be.a('number')
+      })
+    })
+
+    it('should be able to take a list of properties', function(){
+      return Post.find(1, ['title']).then((result)=>{
+        expect(result.title).to.eql('test')
+        expect(result.body).to.eql(undefined)
       })
     })
 
