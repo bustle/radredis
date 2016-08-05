@@ -5,7 +5,19 @@ import through2 from 'through2'
 
 const systemProps = ['id', 'created_at', 'updated_at']
 
-export default function(schema, transforms, port, host, options){
+export class RecordNotFound extends Error {
+  constructor(message) {
+    super(message);
+    this.message = message;
+    this.name = 'RecordNotFound';
+  }
+}
+
+radredis.RecordNotFound = RecordNotFound
+
+export default radredis
+
+function radredis(schema, transforms, port, host, options){
   const keyspace = schema.title.toLowerCase()
 
   const indexedAttributes = _.reduce(schema.properties, (res, val, key) => {
@@ -272,7 +284,7 @@ export default function(schema, transforms, port, host, options){
 function resultsToObjects(results, props){
   return results.map(([err, values]) => {
     if (err) { throw err }
-    if (_.isEmpty(values)) { throw new Error ('Model not found') }
+    if (_.isEmpty(values)) { throw new RecordNotFound() }
     return props ? _.zipObject(props, values) : values
   })
 }

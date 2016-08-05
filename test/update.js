@@ -27,7 +27,7 @@ describe('Radredis', function() {
         },
         (err) =>{
           expect(err).to.not.be(undefined)
-          expect(err.message).to.contain('Model not found')
+          expect(err.name).to.eql('RecordNotFound')
         })
       })
     })
