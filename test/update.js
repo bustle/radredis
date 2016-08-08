@@ -25,10 +25,7 @@ describe('Radredis', function() {
         .then((result)=>{
           expect(result).to.be(undefined)
         },
-        (err) =>{
-          expect(err).to.not.be(undefined)
-          expect(err.name).to.eql('RecordNotFound')
-        })
+        (err) => expect(err).to.be.a(radredis.RecordNotFound) )
       })
     })
 

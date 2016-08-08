@@ -38,7 +38,7 @@ describe('Radredis', () => {
       })
 
       it('should not find a deleted id', () => {
-        return Post.find(post.id).catch(err => console.log(Object.getPrototypeOf(err)) )
+        return Post.find(post.id).catch(err => expect(err).to.be.a(radredis.RecordNotFound) )
       })
 
       it('should delete from indexed attribute indexes', () => {
