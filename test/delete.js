@@ -15,13 +15,6 @@ const schema = {
 }
 const Post = radredis(schema, { beforeSave: spy }, redisOpts)
 
-const expectModelNotFound = [
-  (result) => expect(result).to.be(undefined),
-  (err) => {
-    expect(err).to.not.be(undefined)
-    expect(err.message).to.contain('Model not found')
-  }]
-
 describe('Radredis', () => {
   before(flush)
 
@@ -30,8 +23,7 @@ describe('Radredis', () => {
     describe('id does not exist', () => {
 
       it('should throw an error', () => {
-        return Post.delete(56)
-          .then(...expectModelNotFound)
+        return Post.delete(56).catch(err => expect(err).to.be.a(radredis.RecordNotFound) )
       })
     })
 
@@ -46,8 +38,7 @@ describe('Radredis', () => {
       })
 
       it('should not find a deleted id', () => {
-        return Post.find(post.id)
-          .then(...expectModelNotFound)
+        return Post.find(post.id).catch(err => expect(err).to.be.a(radredis.RecordNotFound) )
       })
 
       it('should delete from indexed attribute indexes', () => {

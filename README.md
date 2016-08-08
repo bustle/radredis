@@ -233,3 +233,20 @@ const schema = {
   afterSave: (savedModel) => { /*do stuff with attributes*/}
 }
 ```
+
+## Errors
+
+radredis will throw a `RecordNotFound` error on any operation where the record does not exist.
+
+``` js
+
+import radredis from 'radredis'
+
+// Can also do:
+//import { default as radredis, RecordNotFound } from 'radredis'
+
+const Post = radredis(schema, transforms, redisOpts)
+
+Post.find(999).catch(radredis.RecordNotFound, (err) => console.log(err) )
+
+```
