@@ -126,7 +126,7 @@ Post.count()
 // => 42
 
 // Count by index
-Post.all({ index: 'published' } )
+Post.count({ index: 'published' } )
 // => 35
 ```
 
