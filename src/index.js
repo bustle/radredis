@@ -92,6 +92,10 @@ function radredis(schema, transforms, port, host, options){
         .map((objs) => { this.push(objs) })
         .then(() => callback() )
       }))
+    },
+
+    count: ({index='id'}={}) => {
+      return redis.zrange(`${keyspace}:indexes:${index}`, 0, -1).get('length')
     }
   }
 
