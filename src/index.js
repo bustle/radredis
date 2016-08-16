@@ -92,6 +92,10 @@ function radredis(schema, transforms, port, host, options){
         .map((objs) => { this.push(objs) })
         .then(() => callback() )
       }))
+    },
+
+    count: () => {
+      return redis.get(`${keyspace}:id`).then(count => parseInt(count, 10))
     }
   }
 
