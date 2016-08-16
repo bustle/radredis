@@ -94,8 +94,8 @@ function radredis(schema, transforms, port, host, options){
       }))
     },
 
-    count: () => {
-      return redis.get(`${keyspace}:id`).then(count => parseInt(count, 10))
+    count: ({index='id'}={}) => {
+      return redis.zrange(`${keyspace}:indexes:${index}`, 0, -1).get('length')
     }
   }
 
