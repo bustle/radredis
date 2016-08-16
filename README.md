@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/bustlelabs/radredis.svg?branch=master)](https://travis-ci.org/bustlelabs/radredis)
 
 Radredis is a node data adapter for redis.
-It is not a full ORM but a simple opinionated interface for storing application data in redis.  
+It is not a full ORM but a simple opinionated interface for storing application data in redis.
 
 ## Goals
 
@@ -20,7 +20,7 @@ It is not a full ORM but a simple opinionated interface for storing application 
 const Radredis = require('radredis')
 const redisOpts = { db: 15, keyPrefix: 'your-app:' }
 const transforms = { beforeSave: (model) => model.title = model.title.toLowerCase() }
-const schema = {  
+const schema = {
   title: 'Post',
   type: "object"
   properties : {
@@ -119,6 +119,16 @@ stream.on('data', (post) => { console.log(post) })
 // ...
 ```
 
+## Count
+
+``` js
+Post.count()
+// => 42
+
+// Count by index
+Post.all({ index: 'published' } )
+// => 35
+```
 
 ## Find
 
@@ -189,7 +199,7 @@ Functions return promise rejections if bad data
 
 Specify indexed attributes inside json schema:
 ``` js
-const schema = {  
+const schema = {
   title: 'Post',
   type: "object"
   properties : {
@@ -205,7 +215,7 @@ const schema = {
 
 Specify attributes that should create a new version when changed inside json schema. The version number is in the `_v` key of the record
 ``` js
-const schema = {  
+const schema = {
   title: 'Post',
   type: "object"
   properties : {
