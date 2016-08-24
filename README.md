@@ -157,7 +157,7 @@ Does a partial update of the model. Basically Object.assign(old, new)
 
 ``` js
 Post.create(1, { author: 5 })
-Post.replace(1, { title: 'A new title'})
+Post.update(1, { title: 'A new title'})
 // => {id: 1, title: 'A new title', author: 5 }
 ```
 
