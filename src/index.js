@@ -49,7 +49,7 @@ function radredis(schema, transforms, port, host, options){
     },
 
     range: ({ min, max, properties, limit = 30, offset = 0, index = 'id' }) => {
-      return redis.zrevrangebyscore(`${keyspace}:indexes:${index}`, max, min, 'LIMIT', offset, offset + limit - 1)
+      return redis.zrevrangebyscore(`${keyspace}:indexes:${index}`, max, min, 'LIMIT', offset, limit)
       .then((ids)=> findByIds(ids, properties) )
     },
 

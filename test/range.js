@@ -42,6 +42,19 @@ describe('Radredis', function() {
       })
     })
 
+
+    it('query the id index', function(){
+      return Post.range({ min: 1, max: 3 }).then((posts)=>{
+        expect(posts.length).to.eql(3)
+      })
+    })
+
+    it('should accept limit parameters without offset', function(){
+      return Post.range({ min: 1, max: 3, limit: 2 }).then((posts)=>{
+        expect(posts.length).to.eql(2)
+      })
+    })
+
     it('should accept a properties parameter', function(){
       return Post.range({ index: 'author_id', min: 3, max: 3, properties: ['author_id']}).then((posts)=>{
         expect(posts.length).to.eql(3)
