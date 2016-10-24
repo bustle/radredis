@@ -102,6 +102,7 @@ describe('Radredis', function() {
         bodies: { type: 'array' },
         type: { type: 'integer'},
         float: { type: 'number' },
+        missingInt: { type: 'integer' },
         trueBool: { type: 'boolean' },
         falseBool: { type: 'boolean' }
       }
@@ -146,6 +147,13 @@ describe('Radredis', function() {
 
     it('should return a parsed float', function(){
       expect(post.float).to.be.a('number')
+    })
+
+    it('should return null for a missing integer', function(){
+      return Post.find(post.id, ['missingInt'])
+      .then((p) => {
+        expect(p.missingInt).to.be(null)
+      })
     })
 
     it('should return a parsed boolean', function(){
