@@ -149,10 +149,9 @@ describe('Radredis', function() {
       expect(post.float).to.be.a('number')
     })
 
-    it('should return null for a missing number', function(){
+    it('should return null for a missing integer', function(){
       return Post.find(post.id, ['missingInt'])
       .then((p) => {
-        console.log(p)
         expect(p.missingInt).to.be(null)
       })
     })
