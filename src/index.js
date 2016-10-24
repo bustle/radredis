@@ -265,7 +265,7 @@ function radredis(schema, transforms, port, host, options){
             attributes[key] = null
           }
         }
-        if (value.type === 'integer'){
+        if (value.type === 'integer' && attributes[key]){
           attributes[key] = parseInt(attributes[key], 10)
         }
         if (value.type === 'boolean'){
