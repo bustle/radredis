@@ -17,7 +17,7 @@
   "dependencies": {
     "bluebird": "^3.3.0",
     "ioredis": "^2.0.0-rc2",
-    "lodash": "^4.3.0",
+    "lodash": "^4.16.5",
     "mocha": "^3.1.2",
     "through2": "^2.0.0"
   },
