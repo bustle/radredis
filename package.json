@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "bluebird": "^3.3.0",
-    "ioredis": "^2.0.0-rc2",
+    "ioredis": "^2.4.3",
     "lodash": "^4.3.0",
     "mocha": "^3.1.2",
     "through2": "^2.0.0"
