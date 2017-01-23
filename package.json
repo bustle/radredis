@@ -11,7 +11,8 @@
   },
   "contributors": [
     "Tyler Love <tyler@bustle.com",
-    "Steve Faulkner <steve@bustle.com>"
+    "Steve Faulkner <steve@bustle.com>",
+    "Tristan Siegel <tristan@bustle.com>"
   ],
   "license": "MIT",
   "dependencies": {
