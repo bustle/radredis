@@ -95,7 +95,7 @@ function radredis(schema, transforms, port, host, options){
     },
 
     count: ({index='id'}={}) => {
-      return redis.zrange(`${keyspace}:indexes:${index}`, 0, -1).get('length')
+      return redis.zcount(`${keyspace}:indexes:${index}`, -Infinity, +Infinity)
     }
   }
 
